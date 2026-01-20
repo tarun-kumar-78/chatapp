@@ -6,4 +6,5 @@ export interface User {
     avatar: string,
     isOnline: boolean,
     lastSeenAt: string | null,
+    conversationId: string
 }
