@@ -4,23 +4,37 @@ import { Input } from "../ui/input";
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
 import { useEffect, useRef, useState } from "react";
 import { socket } from "@/socket/socket";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import type { Message } from "@/type/message";
+import { extractTime12Hour } from "@/utils/extractTime";
+import { incrementUnreadCount } from "@/store/user/userSlice";
+import audio from '@/assets/whatsapp_pc.mp3';
 
 const Chat = () => {
     const [openEmoji, setOpenEmoji] = useState(false);
     const emojiRef = useRef<HTMLDivElement | null>(null);
     const [message, setMessage] = useState<string>("");
-    const [messages, setMessages] = useState<Message[]>([]);
     const { user } = useSelector((state: RootState) => state.user);
     const { selectedUser } = useSelector((state: RootState) => state.user);
     const { selectedUserMessages } = useSelector((state: RootState) => state.user);
+    const { conversationId } = useSelector((state: RootState) => state.user);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [mute, setMute] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const dispatch = useDispatch();
     const handleEmoji = (e: EmojiClickData) => {
         setMessage(message + e.emoji);
         setOpenEmoji(false);
     }
+
+    useEffect(() => {
+        setMessages(selectedUserMessages);
+    }, [selectedUserMessages]);
+
+    useEffect(() => {
+        audioRef.current = new Audio(audio);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -34,6 +48,10 @@ const Chat = () => {
         };
         document.addEventListener("mousedown", handleClickOutside);
         socket.on("recieve-message", (message) => {
+            if (message.conversationId !== conversationId) {
+                audioRef.current?.play();
+                dispatch(incrementUnreadCount(message.conversationId));
+            }
             setMessages((prev) => {
                 const updated = [...prev, message];
                 return updated;
@@ -43,7 +61,8 @@ const Chat = () => {
             document.removeEventListener("mousedown", handleClickOutside);
             socket.off("recieve-message");
         };
-    }, []);
+
+    });
 
 
 
@@ -59,17 +78,17 @@ const Chat = () => {
     const sendMessage = () => {
         if (!selectedUser || !user) return;
         const msg: Message = {
-            id: Date.now().toString(),
+            _id: Date.now().toString(),
             senderId: user._id,
             recieverId: selectedUser?._id,
-            text: message,
-            timestamp: new Date().toString(),
+            content: message,
+            createdAt: new Date().toString(),
+            type: "text"
         }
         setMessages((prev) => [...prev, msg]);
         socket.emit("message", msg);
         setMessage("");
     }
-
     return (
         <div className="border w-full md:flex-1 hidden md:flex flex-col relative">
             {selectedUser ?
@@ -89,12 +108,12 @@ const Chat = () => {
                     <div className="flex-1 flex flex-col gap-3 justify-end py-2 px-3">
                         {messages?.map((message: Message) => {
                             return (
-                                <div key={message.id} className={`flex items-end ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
+                                <div key={message._id} className={`flex items-end ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
                                     <img src={img} alt="image" className="h-6 w-6 rounded-full" />
-                                    <div className="bg-blue-500/30 min-w-1/5 rounded-md relative">
-                                        <p className="py-3 px-2">{message.text}</p>
-                                        <span className="text-[10px] text-gray-400 absolute right-1.5 bottom-0.5">
-                                            10:00 AM
+                                    <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
+                                        <p className="py-3 px-2">{message.content}</p>
+                                        <span className="text-[10px] pt-1 text-gray-400 absolute right-1.5 bottom-0.5">
+                                            {extractTime12Hour(message.createdAt)}
                                         </span>
                                     </div>
                                 </div>

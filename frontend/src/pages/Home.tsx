@@ -14,7 +14,7 @@ const Home = () => {
     useEffect(() => {
         const getUser = async () => {
             try {
-                const response = await api.get(`/api/auth/user`);
+                const response = await api.get(`/api/user/user`);
                 dispatch(addUser(response.data.user));
             } catch (err) {
                 const errMsg = getErrMessage(err);

@@ -2,20 +2,22 @@ import img from '@/assets/chatapp-image.jpg';
 import { Input } from "@/components/ui/input";
 import api from '@/service/axios';
 import type { RootState } from '@/store';
-import { setConversationId, setSelectedUser } from '@/store/user/userSlice';
+import { setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
 import type { User } from '@/type/user';
 import { Pencil, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Badge } from "@/components/ui/badge"
 const Users = () => {
     const [users, setUsers] = useState<User[]>([]);
     const { selectedUser } = useSelector((state: RootState) => state.user);
     const { user } = useSelector((state: RootState) => state.user);
+    const { unreadMessagesCount } = useSelector((state: RootState) => state.user);
     const dispatch = useDispatch();
     useEffect(() => {
         const getUsers = async () => {
             try {
-                const response = await api.get("/api/auth/getAllUsers");
+                const response = await api.get("/api/user/getAllUsers");
                 setUsers(response.data);
             } catch (err) {
                 console.log(err);
@@ -44,14 +46,35 @@ const Users = () => {
         }
     }
 
+    const readMessages = async (conversationId: string) => {
+        try {
+            await api.put("/api/message/readMessages", { conversationId });
+        } catch (err) {
+            console.log("Error in reading messages", err);
+        }
+    }
+
     const handleUserTabClick = async (user: User) => {
         dispatch(setSelectedUser(user));
+        await readMessages(user.conversationId);
         const conversationId = await getConversationId(user._id);
         dispatch(setConversationId(conversationId));
         const messages = await getMessages(conversationId);
+        dispatch(setMessages(messages));
         console.log(messages);
     }
 
+    useEffect(() => {
+        const fetchUnreadCounts = async () => {
+            try {
+                const response = await api.get("/api/message/getUnreadCounts");
+                dispatch(setUnreadCount(response.data.unreadCounts));
+            } catch (err) {
+                console.log("Error fetching unread counts:", err);
+            }
+        };
+        fetchUnreadCounts();
+    }, []);
     return (
         <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
             <div className="flex justify-between items-center">
@@ -74,7 +97,7 @@ const Users = () => {
                 {
                     users.map((user: User) => {
                         return (
-                            <div key={user._id} className={`flex justify-between items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
+                            <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
                                 <div className="flex items-center gap-3">
 
                                     <img src={img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
@@ -83,7 +106,16 @@ const Users = () => {
                                         <p className="text-xs text-gray-500">Role</p>
                                     </div>
                                 </div>
-                                <p className='text-[10px] sm:text-xs text-gray-400'>10:00 AM</p>
+                                <div>
+
+                                    {user.conversationId &&
+                                        unreadMessagesCount[user.conversationId] > 0 && (
+                                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono">
+                                                {unreadMessagesCount[user.conversationId]}
+                                            </Badge>
+                                        )}
+                                    {/* <p className='text-[5px] sm:text-xs text-gray-400'>10:00 AM</p> */}
+                                </div>
 
                             </div>
                         )

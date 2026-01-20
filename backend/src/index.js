@@ -2,13 +2,14 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from './routes/message.route.js';
+import userRoutes from "./routes/user.route.js";
 import { JWT_SECRET, PORT } from "./db/env.js";
 import { connectDB } from "./db/db.js";
 import cookieParser from "cookie-parser";
 import http from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { getOrCreatePrivateConversation } from "./services/message.service.js";
+import { getOrCreatePrivateConversation, saveMessage } from "./services/message.service.js";
 import Message from "./models/message.model.js";
 
 const app = express();
@@ -60,13 +61,14 @@ io.on("connection", (socket) => {
   socket.join(socket.userId);
   socket.on("message", async (msg) => {
     const conversation = await getOrCreatePrivateConversation(msg.recieverId, socket.userId);
-    const message = Message.create({
+    const message = await saveMessage(msg, conversation, socket);
+    io.to(msg.recieverId).emit("recieve-message", {
       conversationId: conversation._id,
       senderId: socket.userId,
-      type: "text",
-      content: msg.text,
+      type: msg.type,
+      content: msg.content,
+      createdAt: message.createdAt,
     });
-    io.to(msg.recieverId).emit("recieve-message", msg);
   })
 
   socket.on("disconnect", () => {
@@ -75,6 +77,7 @@ io.on("connection", (socket) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes)
 app.use("/api/message", messageRoutes)
 
 

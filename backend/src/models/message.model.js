@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema(
             ref: "User",
             required: true
         },
+        receiverId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
 
         type: {
             type: String,
@@ -31,6 +36,10 @@ const messageSchema = new mongoose.Schema(
                 ref: "Message"
             }
         },
+        isRead: {
+            type: Boolean,
+            default: false,
+        },
 
         deletedFor: [
             {
@@ -46,6 +55,11 @@ const messageSchema = new mongoose.Schema(
 
 // Indexes for fast chat loading
 messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({
+    conversationId: 1,
+    senderId: 1,
+    isRead: 1,
+});
 messageSchema.index({ senderId: 1 });
 
 export default mongoose.model("Message", messageSchema);
