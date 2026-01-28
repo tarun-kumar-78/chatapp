@@ -15,7 +15,7 @@ export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
 }
 
 export const getPrivateMessages = async (conversationId) => {
-    const messages = await Messages.find({ conversationId }).sort({ createdAt: 1 }).select("conversationId senderId type content createdAt");
+    const messages = await Messages.find({ conversationId }).sort({ createdAt: -1 }).select("conversationId senderId type content createdAt");
     return messages;
 }
 

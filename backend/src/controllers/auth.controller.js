@@ -47,14 +47,15 @@ export const loginController = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ success: false, message: "All fields are required" });
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(400).json({ success: false, message: "Incorrect email address" });
+    }
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
     if (!isPasswordCorrect)
       return res.status(400).json({ success: false, message: "Incorrect password" });
     generateToken(user.id, res);
     return res.status(200).json({ success: true, message: "Login successfully", user: user });
-
   } catch (err) {
     console.log("Failed to login", err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });

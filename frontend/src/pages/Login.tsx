@@ -89,7 +89,7 @@ const Login = () => {
                                         <FormItem>
 
                                             <FormControl>
-                                                <Input placeholder="Enter password" className='text-white' {...field} />
+                                                <Input placeholder="Enter password" type="password" className='text-white' {...field} />
                                             </FormControl>
 
                                             <FormMessage />
