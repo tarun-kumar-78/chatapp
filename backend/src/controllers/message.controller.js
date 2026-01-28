@@ -1,4 +1,4 @@
-import { getOrCreatePrivateConversation, getPrivateMessages, getUnreadMessagesCount, markMessagesAsRead } from "../services/message.service.js";
+import { getOrCreatePrivateConversation, getPrivateMessages, getUnreadMessagesCount, markMessagesAsRead, uploadImage } from "../services/message.service.js";
 
 export const getConversationId = async (req, res) => {
     try {
@@ -42,5 +42,17 @@ export const markAsRead = async (req, res) => {
     } catch (err) {
         console.error("Error marking messages as read:", err);
         res.status(500).json({ success: false, error: "Internal server error" });
+    }
+}
+
+export const shareImage = async (req, res) => {
+    try {
+        const data = req.body;
+        const { file } = req;
+        const imageUrl = await uploadImage(file, data);
+        res.status(200).json({ success: true, message: "Image uploaded successfully", imageUrl, });
+    } catch (err) {
+        console.log("Error in uploading image controller", err);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }

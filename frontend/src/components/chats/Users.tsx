@@ -2,18 +2,44 @@ import img from '@/assets/chatapp-image.jpg';
 import { Input } from "@/components/ui/input";
 import api from '@/service/axios';
 import type { RootState } from '@/store';
-import { setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
+import { addUser, setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
 import type { User } from '@/type/user';
 import { Pencil, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Badge } from "@/components/ui/badge"
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogDescription,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormMessage,
+} from "@/components/ui/form"
+import { Button } from '../ui/button';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 const Users = () => {
     const [users, setUsers] = useState<User[]>([]);
     const { selectedUser } = useSelector((state: RootState) => state.user);
     const { user } = useSelector((state: RootState) => state.user);
     const { unreadMessagesCount } = useSelector((state: RootState) => state.user);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string>();
+    const [avatarFile, setAvatarFile] = useState<File | null>();
     const dispatch = useDispatch();
+    const imgRef = useRef<HTMLInputElement | null>(null);
+
     useEffect(() => {
         const getUsers = async () => {
             try {
@@ -75,54 +101,172 @@ const Users = () => {
         };
         fetchUnreadCounts();
     }, []);
+
+    const formSchema = z.object({
+        name: z.string().min(2, "Name must be at least 2 characters long"),
+        email: z.string().min(2, "Email must be at least 2 characters long"),
+
+    });
+
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+
+        }
+    });
+
+    useEffect(() => {
+        if (user) {
+            form.reset({
+                name: user.name,
+                email: user.email,
+            })
+        }
+    }, [form, user]);
+
+    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+        try {
+            const formData = new FormData();
+            if (avatarFile) {
+                formData.append("avatar", avatarFile);
+            }
+            formData.append("name", data.name);
+            formData.append("email", data.email);
+            const response = await api.put("/api/user/update-profile", formData);
+            if (response.data.success) {
+                toast.success(response.data.message);
+                setOpenDialog(false);
+                dispatch(addUser(response.data.user));
+            }
+        } catch (err) {
+            console.log("Error updating profile:", err);
+            toast.error("Failed to update profile.");
+        }
+    }
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const previewURL = URL.createObjectURL(file);
+        setPreviewImage(previewURL);
+        setAvatarFile(file);
+
+
+    };
+
     return (
-        <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <img src={img} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
-                    <div className="">
-                        <p className="text-sm font-medium">{user?.name}</p>
-                        <p className="text-xs">Role</p>
+        <>
+            <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <img src={user?.avatar || previewImage} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
+                        <div className="">
+                            <p className="text-sm font-medium">{user?.name}</p>
+                            <p className="text-xs">Role</p>
+                        </div>
                     </div>
+                    <Pencil className="h-4 w-4 sm:w-5 sm:h-5 cursor-pointer" onClick={() => setOpenDialog(true)} />
                 </div>
-                <Pencil className="h-4 w-4 sm:w-5 sm:h-5 cursor-pointer" />
-            </div>
-            <div className="flex my-4 border items-center px-2 rounded-full bg-white">
-                <Search className='h-4 w-4' />
-                <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
-            </div>
-            <div className='border w-full my-3'></div>
-            <div className='flex flex-col gap-3'>
+                <div className="flex my-4 border items-center px-2 rounded-full bg-white">
+                    <Search className='h-4 w-4' />
+                    <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
+                </div>
+                <div className='border w-full my-3'></div>
+                <div className='flex flex-col gap-3'>
 
-                {
-                    users.map((user: User) => {
-                        return (
-                            <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
-                                <div className="flex items-center gap-3">
+                    {
+                        users.map((user: User) => {
+                            return (
+                                <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
+                                    <div className="flex items-center gap-3">
 
-                                    <img src={img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
-                                    <div className="">
-                                        <p className="text-sm">{user.name}</p>
-                                        <p className="text-xs text-gray-500">Role</p>
+                                        <img src={img || previewImage} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
+                                        <div className="">
+                                            <p className="text-sm">{user.name}</p>
+                                            <p className="text-xs text-gray-500">{ }</p>
+                                        </div>
+                                    </div>
+                                    <div>
+
+                                        {user.conversationId &&
+                                            unreadMessagesCount[user.conversationId] > 0 && (
+                                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono">
+                                                    {unreadMessagesCount[user.conversationId]}
+                                                </Badge>
+                                            )}
+                                    </div>
+
+                                </div>
+                            )
+                        })
+                    }
+                </div>
+            </div>
+
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <Form {...form}>
+
+                    <form id="form" onSubmit={form.handleSubmit(onSubmit)} encType="multipart/form-data" onError={() => console.log(form.getValues())}>
+                        <DialogContent className="sm:max-w-106.25">
+                            <DialogHeader>
+                                <DialogTitle>Edit profile</DialogTitle>
+                                <DialogDescription className='text-xs'>Update your profile information</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4">
+                                <div className="grid gap-3 justify-center relative">
+                                    <img src={previewImage || user?.avatar} alt="profile image" className='h-20 w-20 rounded-full' />
+                                    <div onClick={() => imgRef.current?.click()} className='absolute bottom-0 right-[40%] bg-gray-300 rounded-full p-1'>
+                                        <input type="file" className='hidden' id='profilePic' ref={imgRef} onChange={handleImageUpload} />
+                                        <Pencil className="h-3 w-3 sm:w-5 sm:h-5 cursor-pointer" />
                                     </div>
                                 </div>
-                                <div>
+                                <div className="grid gap-3">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
 
-                                    {user.conversationId &&
-                                        unreadMessagesCount[user.conversationId] > 0 && (
-                                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono">
-                                                {unreadMessagesCount[user.conversationId]}
-                                            </Badge>
+                                                <FormControl>
+                                                    <Input placeholder="Enter name" className="" {...field} />
+                                                </FormControl>
+
+                                                <FormMessage />
+                                            </FormItem>
                                         )}
-                                    {/* <p className='text-[5px] sm:text-xs text-gray-400'>10:00 AM</p> */}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+
+                                                <FormControl>
+                                                    <Input placeholder="Enter email" className="" {...field} />
+                                                </FormControl>
+
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
 
                             </div>
-                        )
-                    })
-                }
-            </div>
-        </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button type="submit" form='form'>Save changes</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </form>
+                </Form>
+            </Dialog>
+        </>
 
     )
 }

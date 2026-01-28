@@ -23,3 +23,21 @@ export const getUsersWithConversationId = async (userId) => {
         throw err;
     }
 }
+
+export const updateUserProfile = async (userId, updatedData, file) => {
+    try {
+        const updatedPayload = { ...updatedData };
+        if (file) {
+            updatedPayload.avatar = file.path;
+        }
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: updatedPayload },
+            { new: true }
+        );
+        return updatedUser;
+    } catch (err) {
+        console.log("Error in updating profile service", err);
+        throw err;
+    }
+}

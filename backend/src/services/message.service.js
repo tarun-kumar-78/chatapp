@@ -69,7 +69,7 @@ export const markMessagesAsRead = async (conversationId, userId) => {
     }
 }
 
-export const saveMessage = async (message, conversation, socket) => {
+export const saveMessage = async (msg, conversation, socket) => {
     try {
         const message = await Messages.create({
             conversationId: conversation._id,
@@ -84,3 +84,38 @@ export const saveMessage = async (message, conversation, socket) => {
         throw err;
     }
 }
+
+export const updateLastMessage = async (message) => {
+    try {
+        const updatedConversation = await Conversation.findByIdAndUpdate(message.conversationId, {
+            lastMessage: {
+                messageId: message._id,
+                senderId: message.senderId,
+                content: message.content,
+                type: message.type,
+                createdAt: message.createdAt
+            }
+        }, { new: true });
+    } catch (err) {
+        console.error("Error updating last message:", err);
+        throw err;
+    }
+}
+
+export const uploadImage = async (file, data) => {
+    try {
+        const conversation = await getOrCreatePrivateConversation(data.senderId, data.receiverId);
+        await Messages.create({
+            conversationId: conversation.id,
+            senderId: data.senderId,
+            receiverId: data.receiverId,
+            type: "image",
+            content: file.path,
+        })
+        return file.path;
+    } catch (err) {
+        console.log("Send image error", err);
+        throw err;
+    }
+}
+
