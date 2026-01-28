@@ -31,7 +31,7 @@ export const signupController = async (req, res) => {
       await createdUser.save();
       res
         .status(201)
-        .json({ success: true, message: "User created successfully" });
+        .json({ success: true, message: "User created successfully", user: createdUser });
     }
   } catch (err) {
     console.log("Failed to create user", err.message);
@@ -53,7 +53,7 @@ export const loginController = async (req, res) => {
     if (!isPasswordCorrect)
       return res.status(400).json({ success: false, message: "Incorrect password" });
     generateToken(user.id, res);
-    return res.status(200).json({ success: true, message: "Login successfully" });
+    return res.status(200).json({ success: true, message: "Login successfully", user: user });
 
   } catch (err) {
     console.log("Failed to login", err);

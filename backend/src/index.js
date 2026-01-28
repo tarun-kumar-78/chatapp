@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import http from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { getOrCreatePrivateConversation, saveMessage } from "./services/message.service.js";
+import { getOrCreatePrivateConversation, saveMessage, updateLastMessage } from "./services/message.service.js";
 import Message from "./models/message.model.js";
 
 const app = express();
@@ -60,14 +60,20 @@ io.on("connection", (socket) => {
   console.log("Client connected", socket.userId);
   socket.join(socket.userId);
   socket.on("message", async (msg) => {
+
     const conversation = await getOrCreatePrivateConversation(msg.recieverId, socket.userId);
-    const message = await saveMessage(msg, conversation, socket);
+
+    if (msg.type === "text") {
+      const message = await saveMessage(msg, conversation, socket);
+      await updateLastMessage(message);
+    };
+
     io.to(msg.recieverId).emit("recieve-message", {
       conversationId: conversation._id,
       senderId: socket.userId,
       type: msg.type,
       content: msg.content,
-      createdAt: message.createdAt,
+      createdAt: new Date(),
     });
   })
 
@@ -79,6 +85,7 @@ io.on("connection", (socket) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes)
 app.use("/api/message", messageRoutes)
+
 
 
 server.listen(PORT, () => {

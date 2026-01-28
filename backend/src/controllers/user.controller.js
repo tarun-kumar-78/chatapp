@@ -1,20 +1,17 @@
-import cloudinary from "../lib/cloudinary.js";
-import { User } from "../models/user.model.js";
-import { getUsersWithConversationId } from "../services/user.service.js";
+
+import { getUsersWithConversationId, updateUserProfile } from "../services/user.service.js";
 
 
 export const updateProfile = async (req, res) => {
     try {
-        const { profilePic } = req.body;
-        const userId = req.user._id;
-        if (!profilePic)
-            return res.status(400).json({ success: false, message: "Select a profile picture" });
-        const response = await cloudinary.uploader.upload(profilePic);
-        const updatedUser = await User.findByIdAndUpdate(userId, { profilePic: response.secure_url }, { new: true });
-        return res.status(200).json({ suceess: true, message: "User updated successfully", user: updatedUser });
+        const userId = req.user.id;
+        const updatedData  = req.body;
+        const { file } = req;
+        const updatedUser = await updateUserProfile(userId, updatedData, file);
+        res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });
     } catch (err) {
-        console.log("Failed to update user", err.message);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.log("Update profile controller error", err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
