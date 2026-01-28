@@ -4,7 +4,7 @@ import api from '@/service/axios';
 import type { RootState } from '@/store';
 import { addUser, setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
 import type { User } from '@/type/user';
-import { Pencil, Search } from 'lucide-react';
+import { LogOut, Pencil, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +29,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
+import { getErrMessage } from '@/utils/getErrMessage';
 const Users = () => {
     const [users, setUsers] = useState<User[]>([]);
     const { selectedUser } = useSelector((state: RootState) => state.user);
@@ -39,6 +41,7 @@ const Users = () => {
     const [avatarFile, setAvatarFile] = useState<File | null>();
     const dispatch = useDispatch();
     const imgRef = useRef<HTMLInputElement | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const getUsers = async () => {
@@ -128,16 +131,17 @@ const Users = () => {
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
+
             const formData = new FormData();
             if (avatarFile) {
                 formData.append("avatar", avatarFile);
             }
             formData.append("name", data.name);
             formData.append("email", data.email);
+            setOpenDialog(false);
             const response = await api.put("/api/user/update-profile", formData);
             if (response.data.success) {
                 toast.success(response.data.message);
-                setOpenDialog(false);
                 dispatch(addUser(response.data.user));
             }
         } catch (err) {
@@ -156,12 +160,26 @@ const Users = () => {
 
     };
 
+    const handleLogout = async () => {
+        try {
+            const response = await api.get("/api/auth/logout");
+            if (response.data.success) {
+                toast.success(response.data.message);
+                navigate("/login");
+            }
+        } catch (err) {
+            console.log("Error in logout", err);
+            const errMsg = getErrMessage(err);
+            toast.error(errMsg);
+        }
+    }
+
     return (
         <>
             <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center h-12">
                     <div className="flex items-center gap-3">
-                        <img src={user?.avatar || previewImage} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
+                        <img src={user?.avatar || previewImage || img} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
                         <div className="">
                             <p className="text-sm font-medium">{user?.name}</p>
                             <p className="text-xs">Role</p>
@@ -174,34 +192,44 @@ const Users = () => {
                     <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
                 </div>
                 <div className='border w-full my-3'></div>
-                <div className='flex flex-col gap-3'>
+                <div className='flex justify-between flex-col h-[80%]'>
 
-                    {
-                        users.map((user: User) => {
-                            return (
-                                <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
-                                    <div className="flex items-center gap-3">
+                    <div className='flex flex-col gap-3'>
 
-                                        <img src={img || previewImage} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
-                                        <div className="">
-                                            <p className="text-sm">{user.name}</p>
-                                            <p className="text-xs text-gray-500">{ }</p>
+                        {
+                            users.map((user: User) => {
+                                return (
+                                    <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
+                                        <div className="flex items-center gap-3">
+
+                                            <img src={user.avatar || img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
+                                            <div className="">
+                                                <p className="text-sm">{user.name}</p>
+                                                <p className="text-xs text-gray-500">{ }</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
+                                        <div>
 
-                                        {user.conversationId &&
-                                            unreadMessagesCount[user.conversationId] > 0 && (
-                                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono">
-                                                    {unreadMessagesCount[user.conversationId]}
-                                                </Badge>
-                                            )}
-                                    </div>
+                                            {user.conversationId &&
+                                                unreadMessagesCount[user.conversationId] > 0 && (
+                                                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono">
+                                                        {unreadMessagesCount[user.conversationId]}
+                                                    </Badge>
+                                                )}
+                                        </div>
 
-                                </div>
-                            )
-                        })
-                    }
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <div className='flex items-center justify-center cursor-pointer'>
+                        <div className='flex gap-3 bg-black p-1 text-white items-center rounded-sm' onClick={handleLogout}>
+                            <span>Logout</span>
+                            <LogOut className='h-5 w-5' />
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -216,7 +244,7 @@ const Users = () => {
                             </DialogHeader>
                             <div className="grid gap-4">
                                 <div className="grid gap-3 justify-center relative">
-                                    <img src={previewImage || user?.avatar} alt="profile image" className='h-20 w-20 rounded-full' />
+                                    <img src={previewImage || user?.avatar || img} alt="profile image" className='h-20 w-20 rounded-full' />
                                     <div onClick={() => imgRef.current?.click()} className='absolute bottom-0 right-[40%] bg-gray-300 rounded-full p-1'>
                                         <input type="file" className='hidden' id='profilePic' ref={imgRef} onChange={handleImageUpload} />
                                         <Pencil className="h-3 w-3 sm:w-5 sm:h-5 cursor-pointer" />

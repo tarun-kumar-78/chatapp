@@ -186,7 +186,9 @@ const Chat = () => {
                 <>
                     <div className="flex items-center justify-between p-3 border-b">
                         <div className="flex items-center gap-3">
-                            <img src={img} alt="profile image" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full" />
+                            <div className="flex items-center justify-center rounded-full h-10 w-10 overflow-hidden">
+                                <img src={selectedUser.avatar || img} alt="profile image" className="h-full w-full rounded-full" />
+                            </div>
                             <div>
                                 <p className="text-sm font-medium">{selectedUser?.name}</p>
                                 <p className="text-xs text-green-500">Online</p>
@@ -235,7 +237,7 @@ const Chat = () => {
                             {messages?.map((message: Message) => {
                                 return (
                                     <div key={message._id} className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
-                                        <img src={img} alt="image" className="h-6 w-6 rounded-full" />
+                                        <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
                                         <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
                                             {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
                                             <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
@@ -263,7 +265,7 @@ const Chat = () => {
                                 <Smile className="cursor-pointer" onClick={() => setOpenEmoji(!openEmoji)} />
                                 <Camera className="cursor-pointer" onClick={startCamera} />
                                 <Image className="cursor-pointer" onClick={() => imgRef.current?.click()} />
-                                <input type="file" className="hidden" ref={imgRef} onChange={shareImage} />
+                                <input type="file" className="hidden" ref={imgRef} onChange={shareImage} accept="image/*" />
                             </div>
                         </div>
                         <SendHorizontal className={`cursor-pointer ${message === "" && "text-gray-400"}`} onClick={sendMessage} />
