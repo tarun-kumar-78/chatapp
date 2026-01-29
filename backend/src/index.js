@@ -10,7 +10,6 @@ import http from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { getOrCreatePrivateConversation, saveMessage, updateLastMessage } from "./services/message.service.js";
-import Message from "./models/message.model.js";
 
 const app = express();
 app.use(express.json());
