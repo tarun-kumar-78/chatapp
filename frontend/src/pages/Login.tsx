@@ -66,7 +66,7 @@ const Login = () => {
                             </Link>
                         </p>
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
+                            <form onSubmit={form.handleSubmit(onSubmit)} method='post' className="space-y-4 mt-6">
 
                                 <FormField
                                     control={form.control}
