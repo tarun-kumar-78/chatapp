@@ -1,21 +1,23 @@
 import mongoose from "mongoose";
 import { Conversation } from "../models/conversation.model.js"
 import Messages from '../models/message.model.js';
+import getConversationKey from "../utils/getConversationKey.js";
 
 export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
-    let conversation = await Conversation.findOne({ type: "private", participants: { $all: [userOneId, userTwoId], $size: 2 } });
+    const key = getConversationKey(userOneId, userTwoId);
+    let conversation = await Conversation.findOne({ conversationKey: key });
     if (!conversation) {
         conversation = await Conversation.create({
             type: "private",
             participants: [userOneId, userTwoId],
-            createdBy: userOneId
-        });
+            conversationKey: key,
+        })
     }
     return conversation;
 }
 
 export const getPrivateMessages = async (conversationId) => {
-    const messages = await Messages.find({ conversationId }).sort({ createdAt: -1 }).select("conversationId senderId type content createdAt");
+    const messages = await Messages.find({ conversationId }).sort({ createdAt: 1 }).select("conversationId senderId type content createdAt");
     return messages;
 }
 

@@ -7,7 +7,7 @@ import { socket } from "@/socket/socket";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import type { Message } from "@/type/message";
-import { extractTime12Hour } from "@/utils/extractTime";
+import { extractTime12Hour, getDateLabel, isSameDay } from "@/utils/extractTime";
 import { incrementUnreadCount } from "@/store/user/userSlice";
 import audio from '@/assets/whatsapp_pc.mp3';
 import { Scrollbar } from 'react-scrollbars-custom';
@@ -234,15 +234,27 @@ const Chat = () => {
                                 }
                             }}>
 
-                            {messages?.map((message: Message) => {
+                            {messages?.map((message: Message, index) => {
+                                const msgDate = new Date(message.createdAt);
+                                const prevMsg = messages[index - 1];
+                                const showDate =
+                                    !prevMsg ||
+                                    !isSameDay(msgDate, new Date(prevMsg.createdAt));
                                 return (
-                                    <div key={message._id} className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
-                                        <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
-                                        <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
-                                            {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
-                                            <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
-                                                {extractTime12Hour(message.createdAt)}
-                                            </span>
+                                    <div key={message._id}>
+                                        {showDate && (
+                                            <div className="text-center my-3 text-gray-500 text-sm">
+                                                {getDateLabel(msgDate)}
+                                            </div>
+                                        )}
+                                        <div className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
+                                            <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
+                                            <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
+                                                {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
+                                                <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
+                                                    {extractTime12Hour(message.createdAt)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 );

@@ -16,6 +16,11 @@ const conversationSchema = new mongoose.Schema(
             ref: "User",
             required: true
         }],
+        conversationKey: {
+            type: String,
+            required: true,
+            unique: true,
+        },
 
         title: { type: String },
         avatar: { type: String },
@@ -30,5 +35,5 @@ const conversationSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
+conversationSchema.index({ conversationKey: 1 }, { unique: true });
 export const Conversation = mongoose.model("Conversation", conversationSchema);
