@@ -1,8 +1,7 @@
-import { PROD } from '@/config/config';
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: PROD,
+    baseURL: import.meta.env.VITE_BACKEND_URL,
     timeout: 10000,
     withCredentials: true
 });
