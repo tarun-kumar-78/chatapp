@@ -18,6 +18,16 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
     Form,
     FormControl,
     FormField,
@@ -42,6 +52,7 @@ const Users = () => {
     const dispatch = useDispatch();
     const imgRef = useRef<HTMLInputElement | null>(null);
     const navigate = useNavigate();
+    const [logout, setLogout] = useState<boolean>(false);
 
     useEffect(() => {
         const getUsers = async () => {
@@ -224,7 +235,7 @@ const Users = () => {
                         }
                     </div>
                     <div className='flex items-center justify-center cursor-pointer'>
-                        <div className='flex gap-3 bg-black p-1 text-white items-center rounded-sm' onClick={handleLogout}>
+                        <div className='flex gap-3 bg-black p-1 text-white items-center rounded-sm' onClick={() => setLogout(true)}>
                             <span>Logout</span>
                             <LogOut className='h-5 w-5' />
                         </div>
@@ -294,6 +305,21 @@ const Users = () => {
                     </form>
                 </Form>
             </Dialog>
+
+            {/* Logout dialog */}
+            <AlertDialog open={logout} >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setLogout(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
 
     )
