@@ -6,7 +6,7 @@ import {
     FormItem,
     FormMessage,
 } from "@/components/ui/form"
-import chatappImage from '@/assets/chatapp-image.jpg'
+import loginImg from '@/assets/pexels-lostintespace-14220392.jpg'
 import { Button } from '@/components/ui/button'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
@@ -16,19 +16,26 @@ import { Input } from '@/components/ui/input'
 import api from '@/service/axios'
 import { toast } from 'sonner'
 import { getErrMessage } from '@/utils/getErrMessage'
+import { useDispatch } from 'react-redux'
+import { setLogin } from '@/store/auth/authSlice'
+import Google from '@/assets/Google.png'
+import { useState } from 'react'
+import { EyeIcon, EyeOff } from 'lucide-react'
 
 
 const Login = () => {
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [showPass, setShowPass] = useState(false);
     const formSchema = z.object({
-        email: z.email(),
-        password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/, "Password should contain uppercase,lowercase, number, special character")
+        username: z.string().min(3, "Invalid username"),
+        password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/, "Contain alphanumeric and special character")
     })
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
+            username: "",
             password: ""
         }
     })
@@ -37,6 +44,7 @@ const Login = () => {
         try {
             const response = await api.post("/api/auth/login", data);
             if (response.data?.success) {
+                dispatch(setLogin(true));
                 navigate("/");
                 toast.success(response.data.message);
             }
@@ -50,35 +58,29 @@ const Login = () => {
         <div style={{ backgroundImage: `url(${bg})` }} className="relative min-h-screen bg-cover bg-center">
             <div className='absolute inset-0 bg-black/30 backdrop-blur-sm'></div>
             <div className='relative z-10 flex items-center justify-center min-h-screen px-4'>
-                <div className='flex w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-black/40 md:flex-row'>
-                    <div style={{ backgroundImage: `url(${chatappImage})` }} className='relative hidden md:flex bg-center bg-cover w-1/2'>
-                        <Button variant="link" className="absolute top-4 left-4 text-white">Back to website</Button>
-                    </div>
-                    <div className='w-full p-6 md:w-1/2'>
-                        <h2 className='text-2xl text-center text-white'>Login</h2>
-                        <p className="mt-1 text-center text-xs text-white">
-                            Don't have an account?{" "}
-                            <Link
-                                to="/register"
-                                className="underline text-blue-400 hover:text-blue-300"
-                            >
-                                Register
-                            </Link>
-                        </p>
+                <div className='flex items-center justify-center gap-3 w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden p-3'>
+                    <section className='hidden md:block md:w-1/2 overflow-hidden rounded-md'>
+                        <img src={loginImg} alt="login image" className='h-full w-full object-cover rounded-md' />
+                    </section>
+                    <section className='min-w-1/2 p-3 flex flex-col gap-4'>
+                        <div>
+                            <h1 className='text-3xl md:text-4xl font-semibold mb-1'>Login</h1>
+                            <p className='text-sm text-gray-400'>Don't have an account? <Link to="/register" className='text-blue-600 underline'>Register</Link></p>
+                        </div>
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} method='post' className="space-y-4 mt-6">
-
+                            <form method='post' className='flex flex-col' onSubmit={form.handleSubmit(onSubmit)}>
                                 <FormField
                                     control={form.control}
-                                    name="email"
+                                    name="username"
                                     render={({ field }) => (
                                         <FormItem>
 
-                                            <FormControl>
-                                                <Input placeholder="Enter email" className='text-white' {...field} />
+                                            <FormControl className='h-10 focus:shadow-md transition duration-500 ease-in-out'>
+                                                <Input placeholder="Username" {...field} />
                                             </FormControl>
-
-                                            <FormMessage />
+                                            <div className="min-h-5">
+                                                <FormMessage className="text-xs" />
+                                            </div>
                                         </FormItem>
                                     )}
                                 />
@@ -87,19 +89,33 @@ const Login = () => {
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
+                                            <>
+                                                <div className='relative'>
+                                                    <FormControl className='h-10 focus:shadow-md transition duration-500 ease-in-out'>
+                                                        <Input type={showPass ? "text" : "password"} placeholder="Password" {...field} />
+                                                    </FormControl>
+                                                    <div onClick={() => setShowPass(!showPass)}>
 
-                                            <FormControl>
-                                                <Input placeholder="Enter password" type="password" className='text-white' {...field} />
-                                            </FormControl>
-
-                                            <FormMessage />
+                                                        {showPass ? <EyeIcon className='absolute right-2 top-2.5 h-5 w-5 cursor-pointer' />
+                                                            : <EyeOff className='absolute right-2 top-2.5 h-5 w-5 cursor-pointer' />}
+                                                    </div>
+                                                </div>
+                                                <div className="min-h-5">
+                                                    <FormMessage className="text-xs" />
+                                                </div>
+                                            </>
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit" className='w-full bg-white hover:bg-white/90 text-black cursor-pointer'>Login</Button>
+                                <Button type='submit' className='mt-3 h-10 cursor-pointer' variant="default">Login</Button>
                             </form>
                         </Form>
-                    </div>
+                        <div className='h-10 border border-black flex items-center justify-center gap-3 rounded-md cursor-pointer font-semibold'>
+                            <img src={Google} alt="google logo" className='h-6 w-6' />
+                            Login with Google
+
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>

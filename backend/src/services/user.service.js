@@ -41,3 +41,24 @@ export const updateUserProfile = async (userId, updatedData, file) => {
         throw err;
     }
 }
+
+export const getUserByEmail = async (email) => {
+    try {
+        const user = await User.findOne({ email });
+        return user;
+    } catch (err) {
+        throw err;
+    }
+}
+
+export const createNewUser = async (user) => {
+    try {
+        const createdUser = await User.create({
+            name: user.name,
+            email: user.email,
+
+        })
+    } catch (err) {
+        throw err;
+    }
+}
