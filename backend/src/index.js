@@ -3,66 +3,15 @@ import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from './routes/message.route.js';
 import userRoutes from "./routes/user.route.js";
-import { CLIENT_ID, CLIENT_SECRET, JWT_SECRET, PORT } from "./db/env.js";
+import { JWT_SECRET, PORT } from "./db/env.js";
 import { connectDB } from "./db/db.js";
 import cookieParser from "cookie-parser";
 import http from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { getOrCreatePrivateConversation, saveMessage, updateLastMessage } from "./services/message.service.js";
-import passport from 'passport'
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import session from 'express-session';
-import generateToken from "./utils/generateToken.js";
-import { createNewUser, getUserByEmail } from "./services/user.service.js";
 
 const app = express();
-app.use(session({
-  secret: CLIENT_SECRET,
-  resave: false,
-  saveUninitialized: true
-}))
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new GoogleStrategy({
-  clientID: CLIENT_ID,
-  clientSecret: CLIENT_SECRET,
-  callbackURL: "/auth/google/callback"
-}, (accessToken, refreshToken, profile, done) => {
-  // console.log(profile);
-  return done(null, profile);
-}))
-
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((user, done) => done(null, user));
-
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
-
-// Google Redirect Callback
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: 'http://localhost:5173/login' }),
-  async (req, res) => {
-    // Successful authentication, redirect to frontend/dashboard
-    const userExist = await getUserByEmail(req.user.emails[0].value);
-    if (userExist) {
-      generateToken(userExist.id, res);
-    } else {
-      await createNewUser({ name: req.user.displayName, email: req.user.emails[0].value, authType: "Google" })
-    }
-    res.redirect("http://localhost:5173/")
-  }
-);
-
-// Logout
-app.get('/auth/logout', (req, res) => {
-  req.logout(() => {
-    res.redirect('http://localhost:5173/login');
-  });
-});
-
 app.use(express.json());
 app.use(cors({
   origin: ["http://localhost:5173", "https://chatapp-snowy-psi.vercel.app"],

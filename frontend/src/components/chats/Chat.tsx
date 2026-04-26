@@ -63,10 +63,8 @@ const Chat = () => {
         document.addEventListener("mousedown", handleClickOutside);
         socket.on("recieve-message", (message) => {
             if (message.conversationId !== conversationId) {
-                if (!mute) {
-                    audioRef.current?.play();
-                    dispatch(incrementUnreadCount(message.conversationId));
-                }
+                audioRef.current?.play();
+                dispatch(incrementUnreadCount(message.conversationId));
             } else {
 
                 setMessages((prev) => {
@@ -189,19 +187,13 @@ const Chat = () => {
     }
 
     return (
-        <>
-            <div className="border w-full md:flex-1 hidden md:flex flex-col relative">
-                {selectedUser ?
-                    <>
-                        <div className="flex items-center justify-between p-3 border-b">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center rounded-full h-10 w-10 overflow-hidden">
-                                    <img src={selectedUser.avatar || img} alt="profile image" className="h-full w-full rounded-full" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium">{selectedUser?.name}</p>
-                                    <p className="text-xs text-green-500">Online</p>
-                                </div>
+        <div className="border w-full md:flex-1 hidden md:flex flex-col relative">
+            {selectedUser ?
+                <>
+                    <div className="flex items-center justify-between p-3 border-b">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center rounded-full h-10 w-10 overflow-hidden">
+                                <img src={selectedUser.avatar || img} alt="profile image" className="h-full w-full rounded-full" />
                             </div>
                             <div className="flex gap-3 items-center">
                                 <DropdownMenu>
@@ -224,98 +216,100 @@ const Chat = () => {
 
                             </div>
                         </div>
-                        <div className="flex-1 flex flex-col gap-3 justify-end p-3">
+                        <div>
+                            {mute ? <BellOff onClick={() => setMute(false)} className="h-5 w-5 cursor-pointer" /> : <Bell className="h-5 w-5 cursor-pointer" onClick={() => setMute(true)} />}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col gap-3 justify-end p-3">
 
-                            {cameraOpen && (
-                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                                    <div className="bg-white rounded-xl p-4 shadow-lg w-80">
-                                        <video
-                                            ref={videoRef}
-                                            className="rounded-lg w-full h-56 object-cover"
-                                        />
+                        {cameraOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                                <div className="bg-white rounded-xl p-4 shadow-lg w-80">
+                                    <video
+                                        ref={videoRef}
+                                        className="rounded-lg w-full h-56 object-cover"
+                                    />
 
-                                        <div className="flex justify-between mt-3">
-                                            <button
-                                                className="px-3 py-1 bg-gray-200 rounded cursor-pointer"
-                                                onClick={stopCamera}
-                                            >
-                                                Cancel
-                                            </button>
+                                    <div className="flex justify-between mt-3">
+                                        <button
+                                            className="px-3 py-1 bg-gray-200 rounded cursor-pointer"
+                                            onClick={stopCamera}
+                                        >
+                                            Cancel
+                                        </button>
 
-                                            <button
-                                                className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer"
-                                                onClick={clickImage}
-                                            >
-                                                Capture
-                                            </button>
-                                        </div>
+                                        <button
+                                            className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer"
+                                            onClick={clickImage}
+                                        >
+                                            Capture
+                                        </button>
                                     </div>
                                 </div>
-                            )}
-                            <Scrollbar noScrollX className="[&_.ScrollbarsCustom-Content]:flex [&_.ScrollbarsCustom-Content]:flex-col [&_.ScrollbarsCustom-Content]:justify-end"
-                                trackYProps={{
-                                    style: {
-                                        width: 0,
-                                        background: "transparent"
-                                    }
-                                }}>
+                            </div>
+                        )}
+                        <Scrollbar noScrollX className="[&_.ScrollbarsCustom-Content]:flex [&_.ScrollbarsCustom-Content]:flex-col [&_.ScrollbarsCustom-Content]:justify-end"
+                            trackYProps={{
+                                style: {
+                                    width: 0,
+                                    background: "transparent"
+                                }
+                            }}>
 
-                                {messages?.map((message: Message, index) => {
-                                    const msgDate = new Date(message.createdAt);
-                                    const prevMsg = messages[index - 1];
-                                    const showDate =
-                                        !prevMsg ||
-                                        !isSameDay(msgDate, new Date(prevMsg.createdAt));
-                                    return (
-                                        <div key={message._id}>
-                                            {showDate && (
-                                                <div className="text-center my-3 text-gray-500 text-sm">
-                                                    {getDateLabel(msgDate)}
-                                                </div>
-                                            )}
-                                            <div className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
-                                                <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
-                                                <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
-                                                    {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
-                                                    <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
-                                                        {extractTime12Hour(message.createdAt)}
-                                                    </span>
-                                                </div>
+                            {messages?.map((message: Message, index) => {
+                                const msgDate = new Date(message.createdAt);
+                                const prevMsg = messages[index - 1];
+                                const showDate =
+                                    !prevMsg ||
+                                    !isSameDay(msgDate, new Date(prevMsg.createdAt));
+                                return (
+                                    <div key={message._id}>
+                                        {showDate && (
+                                            <div className="text-center my-3 text-gray-500 text-sm">
+                                                {getDateLabel(msgDate)}
+                                            </div>
+                                        )}
+                                        <div className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
+                                            <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
+                                            <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
+                                                {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
+                                                <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
+                                                    {extractTime12Hour(message.createdAt)}
+                                                </span>
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                );
+                            })}
 
-                            </Scrollbar>
+                        </Scrollbar>
 
-                        </div>
-                        <div className="flex items-center justify-center gap-2 px-3 py-2 border-t bg-blue-400/30">
-                            <div className="border border-white flex justify-between px-2 rounded-full w-4/5">
-                                <div className="flex items-center w-full pr-3 rounded-full">
-
-                                    <Input className="border-none focus-visible:ring-0" placeholder="Enter message" onChange={handleMessageInput} value={message} onKeyDown={handleEnterPress} />
-                                </div>
-                                <div className="absolute right-1.5 bottom-14" ref={emojiRef}>
-                                    <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
-                                </div>
-                                <div className="flex items-center gap-2 text-gray-500">
-
-                                    <Smile className="cursor-pointer" onClick={() => setOpenEmoji(!openEmoji)} />
-                                    <Camera className="cursor-pointer" onClick={startCamera} />
-                                    <Image className="cursor-pointer" onClick={() => imgRef.current?.click()} />
-                                    <input type="file" className="hidden" ref={imgRef} onChange={shareImage} accept="image/*" />
-                                </div>
-                            </div>
-                            <SendHorizontal className={`cursor-pointer ${message === "" && "text-gray-400"}`} onClick={sendMessage} />
-                        </div>
-                    </>
-                    : <div className="flex items-center justify-center h-full">
-                        <p className="text-gray-500 border rounded-md p-2 bg-gray-100">Select a user to start chat</p>
                     </div>
-                }
-            </div>
+                    <div className="flex items-center justify-center gap-2 px-3 py-2 border-t bg-blue-400/30">
+                        <div className="border border-white flex justify-between px-2 rounded-full w-4/5">
+                            <div className="flex items-center w-full pr-3 rounded-full">
 
-        </>
+                                <Input className="border-none focus-visible:ring-0" placeholder="Enter message" onChange={handleMessageInput} value={message} onKeyDown={handleEnterPress} />
+                            </div>
+                            <div className="absolute right-1.5 bottom-14" ref={emojiRef}>
+                                <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-500">
+
+                                <Smile className="cursor-pointer" onClick={() => setOpenEmoji(!openEmoji)} />
+                                <Camera className="cursor-pointer" onClick={startCamera} />
+                                <Image className="cursor-pointer" onClick={() => imgRef.current?.click()} />
+                                <input type="file" className="hidden" ref={imgRef} onChange={shareImage} accept="image/*" />
+                            </div>
+                        </div>
+                        <SendHorizontal className={`cursor-pointer ${message === "" && "text-gray-400"}`} onClick={sendMessage} />
+                    </div>
+                </>
+                : <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500 border rounded-md p-2 bg-gray-100">Select a user to start chat</p>
+                </div>
+            }
+        </div>
     )
 }
 
