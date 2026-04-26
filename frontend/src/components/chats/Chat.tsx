@@ -1,4 +1,4 @@
-import { Bell, BellOff, Camera, SendHorizontal, Smile } from "lucide-react"
+import { Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
 import img from '@/assets/chatapp-image.jpg';
 import { Input } from "../ui/input";
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
@@ -13,6 +13,13 @@ import audio from '@/assets/whatsapp_pc.mp3';
 import { Scrollbar } from 'react-scrollbars-custom';
 import { Image } from 'lucide-react';
 import api from "@/service/axios";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const Chat = () => {
     const [openEmoji, setOpenEmoji] = useState(false);
@@ -127,7 +134,6 @@ const Chat = () => {
 
         const video = videoRef.current;
         const canvas = document.createElement("canvas");
-        console.log(canvas);
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
@@ -189,9 +195,25 @@ const Chat = () => {
                             <div className="flex items-center justify-center rounded-full h-10 w-10 overflow-hidden">
                                 <img src={selectedUser.avatar || img} alt="profile image" className="h-full w-full rounded-full" />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium">{selectedUser?.name}</p>
-                                <p className="text-xs text-green-500">Online</p>
+                            <div className="flex gap-3 items-center">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <EllipsisVertical className="h-5 w-5 cursor-pointer" />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuGroup>
+                                            <DropdownMenuItem>Profile</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setMute(prev => !prev)}>
+                                                {mute ? "Unmute notifications" : "Mute notifications"}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem>Clear chat</DropdownMenuItem>
+                                            <DropdownMenuItem>Export chat</DropdownMenuItem>
+                                            <DropdownMenuItem>Block</DropdownMenuItem>
+                                        </DropdownMenuGroup>
+
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
                             </div>
                         </div>
                         <div>
