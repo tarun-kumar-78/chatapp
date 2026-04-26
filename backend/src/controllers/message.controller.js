@@ -14,8 +14,9 @@ export const getConversationId = async (req, res) => {
 
 export const getMessages = async (req, res) => {
     try {
-        const { conversationId } = req.body;
-        const messages = await getPrivateMessages(conversationId);
+        const { conversationId } = req.params;
+        const userId = req.user.id;
+        const messages = await getPrivateMessages(conversationId, userId);
         res.status(200).json({ success: true, messages });
     } catch (error) {
         console.error("Error fetching private messages:", error);

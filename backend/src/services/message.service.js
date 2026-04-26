@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Conversation } from "../models/conversation.model.js"
 import Messages from '../models/message.model.js';
 import getConversationKey from "../utils/getConversationKey.js";
+import { UserChatState } from "../models/userChatsState.model.js";
 
 export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
     const key = getConversationKey(userOneId, userTwoId);
@@ -16,8 +17,20 @@ export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
     return conversation;
 }
 
-export const getPrivateMessages = async (conversationId) => {
-    const messages = await Messages.find({ conversationId }).sort({ createdAt: 1 }).select("conversationId senderId type content createdAt");
+export const getPrivateMessages = async (conversationId, userId) => {
+    await UserChatState.findOneAndUpdate(
+        { userId, conversationId },
+        { $setOnInsert: { conversationId, userId } },
+        { upsert: true });
+
+    const state = await UserChatState.findOne({ userId, conversationId }).lean();
+
+    const messages = await Messages.find({
+        conversationId,
+        ...(state.deletedTill && { _id: { $gt: state.deletedTill } })
+    })
+        .sort({ _id: -1 })
+        .limit(30).lean();
     return messages;
 }
 
