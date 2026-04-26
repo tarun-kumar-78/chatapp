@@ -35,4 +35,5 @@ const conversationSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+conversationSchema.index({ conversationKey: 1 }, { unique: true });
 export const Conversation = mongoose.model("Conversation", conversationSchema);

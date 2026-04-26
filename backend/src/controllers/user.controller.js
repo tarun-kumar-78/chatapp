@@ -5,7 +5,7 @@ import { getUsersWithConversationId, updateUserProfile } from "../services/user.
 export const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const updatedData = req.body;
+        const updatedData  = req.body;
         const { file } = req;
         const updatedUser = await updateUserProfile(userId, updatedData, file);
         res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });
@@ -32,13 +32,3 @@ export const getAllUsers = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
-
-export const checkAuthStatusController = async (req, res) => {
-    try {
-        return res.status(200).json({ success: true, user: req.user });
-    } catch (err) {
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-}
-
-

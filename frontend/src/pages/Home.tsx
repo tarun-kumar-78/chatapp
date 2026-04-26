@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { useDispatch } from 'react-redux';
 import { addUser } from "@/store/user/userSlice";
-import UserProfile from "@/components/chats/UserProfile";
 
 
 const Home = () => {
@@ -45,7 +44,7 @@ const Home = () => {
         <div className="bg-white min-h-screen flex">
             <Users />
             <Chat />
-            <UserProfile />
+            <div className="border min-w-[20%] hidden lg:flex"></div>
         </div>
     );
 };
