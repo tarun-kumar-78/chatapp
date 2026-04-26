@@ -1,4 +1,4 @@
-import { Bell, BellOff, Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
+import { Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
 import img from '@/assets/chatapp-image.jpg';
 import { Input } from "../ui/input";
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
@@ -18,11 +18,8 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "../ui/button";
 
 const Chat = () => {
     const [openEmoji, setOpenEmoji] = useState(false);
@@ -139,7 +136,6 @@ const Chat = () => {
 
         const video = videoRef.current;
         const canvas = document.createElement("canvas");
-        console.log(canvas);
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
@@ -215,7 +211,9 @@ const Chat = () => {
                                     <DropdownMenuContent>
                                         <DropdownMenuGroup>
                                             <DropdownMenuItem>Profile</DropdownMenuItem>
-                                            <DropdownMenuItem>Mute notification</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setMute(prev => !prev)}>
+                                                {mute ? "Unmute notifications" : "Mute notifications"}
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem>Clear chat</DropdownMenuItem>
                                             <DropdownMenuItem>Export chat</DropdownMenuItem>
                                             <DropdownMenuItem>Block</DropdownMenuItem>
