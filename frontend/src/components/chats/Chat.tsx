@@ -1,4 +1,4 @@
-import { Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
+import { Bell, BellOff, Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
 import img from '@/assets/chatapp-image.jpg';
 import { Input } from "../ui/input";
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
@@ -104,6 +104,7 @@ const Chat = () => {
         setMessages((prev) => [...prev, msg]);
         socket.emit("message", msg);
         setMessage("");
+
     }
 
     const startCamera = async () => {

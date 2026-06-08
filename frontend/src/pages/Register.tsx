@@ -1,25 +1,19 @@
-import bg from '@/assets/bg.jpg';
-import chatappImage from '@/assets/chatapp-image.jpg'
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router';
 import api from '@/service/axios';
 import { toast } from 'sonner';
 import { getErrMessage } from '@/utils/getErrMessage';
 
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+
 const Register = () => {
   const navigate = useNavigate();
-
+  const [showPass, setShowPass] = useState(false);
   const formSchema = z.object({
     name: z.string().min(3, "Name should be more than three characters").max(15, "Name should not greater than 15 characters"),
     email: z.email(),
@@ -35,7 +29,7 @@ const Register = () => {
     }
   })
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const register = async (data: z.infer<typeof formSchema>) => {
     try {
       const response = await api.post("/api/auth/signup", data);
       if (response.data.success) {
@@ -49,88 +43,98 @@ const Register = () => {
   }
 
   return (
-    <div style={{ backgroundImage: `url(${bg})` }} className="relative min-h-screen bg-cover bg-center">
-      <div className='absolute inset-0 bg-black/30 backdrop-blur-sm'></div>
-      <div className='relative z-10 flex items-center justify-center min-h-screen px-4'>
-        <div className='flex w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-black/40 md:flex-row'>
-          <div style={{ backgroundImage: `url(${chatappImage})` }} className='relative hidden md:flex bg-center bg-cover w-1/2'>
-            <Button variant="link" className="absolute top-4 left-4 text-white">Back to website</Button>
-          </div>
-          <div className='w-full p-6 md:w-1/2'>
-            <h2 className='text-2xl text-center text-white'>Create an account</h2>
-            <p className="mt-1 text-center text-xs text-white">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="underline text-blue-400 hover:text-blue-300"
-              >
-                Login
-              </Link>
-            </p>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-
-                      <FormControl>
-                        <Input placeholder="Enter name" className='text-white' {...field} />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-
-                      <FormControl>
-                        <Input placeholder="Enter email" className='text-white' {...field} />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-
-                      <FormControl>
-                        <Input placeholder="Enter password" className='text-white' {...field} />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className='w-full bg-white hover:bg-white/90 text-black cursor-pointer'>Register</Button>
-              </form>
-            </Form>
-            <div className='mt-6 space-y-4'>
-
-              <div className='flex items-center gap-3'>
-                <div className='h-px flex-1 bg-white/30'></div>
-                <p className='text-white text-xs'>Or register with</p>
-                <div className='h-px flex-1 bg-white/30'></div>
-              </div>
-              <div className='flex gap-3'>
-                <Button className='bg-white text-black w-1/2 cursor-pointer' variant="secondary">Google</Button>
-                <Button className='bg-white text-black w-1/2 cursor-pointer' variant="secondary">Facebook</Button>
-              </div>
+    <main className="px-4 md:px-8 min-h-screen flex flex-col items-center justify-center">
+      <div className="max-w-md w-full">
+        <div
+          className="p-6 rounded-lg bg-white border border-slate-300 shadow-xs md:p-6 dark:bg-neutral-800 dark:border-neutral-700">
+          <h1 className="text-slate-900 text-center text-2xl font-bold dark:text-slate-50">Create an account</h1>
+          <form className="space-y-6 mt-10" onSubmit={form.handleSubmit(register)}>
+            <div className='relative mb-10'>
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Name</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Tarun Kumar"
+                      autoComplete="off"
+                      className='h-10'
+                    />
+                    <div className="min-h-4 -mt-2 ml-1">
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  </Field>
+                )}
+              />
             </div>
+            <div className='relative mb-10'>
+              <Controller
+                name="email"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Email</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="john@gmail.com"
+                      autoComplete="off"
+                      className='h-10'
+                    />
+                    <div className="min-h-4 -mt-2 ml-1">
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  </Field>
+                )}
+              />
+            </div>
+            <div className='relative'>
+              <Controller
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Password</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Password"
+                      autoComplete="off"
+                      className='h-10'
+                      type={!showPass ? "text" : "password"}
+                    />
+                    <div className="min-h-10 -mt-2 ml-1">
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  </Field>
+                )}
+              />
+              {showPass ? <EyeOff className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} /> :
+                <Eye className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} />}
+            </div>
+            <button type="submit"
+              className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+              Create an account</button>
+          </form>
+          <div className="mt-6 text-slate-900 text-sm text-center dark:text-slate-50">Already have an account? <Link to="/login"
+            className="text-blue-700 hover:underline ml-1 font-medium dark:text-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">
+            Login here</Link>
           </div>
         </div>
       </div>
-
-    </div>
+    </main>
   )
 }
 

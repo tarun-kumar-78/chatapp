@@ -5,21 +5,22 @@ import messageRoutes from './routes/message.route.js';
 import userRoutes from "./routes/user.route.js";
 import { JWT_SECRET, PORT } from "./db/env.js";
 import { connectDB } from "./db/db.js";
+import cookie from "cookie";
 import cookieParser from "cookie-parser";
 import http from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { getOrCreatePrivateConversation, saveMessage, updateLastMessage } from "./services/message.service.js";
 
-const app = express();
-app.use(express.json());
+const app = express(); // create express server instance
+app.use(express.json()); // parse json into req.body
 app.use(cors({
   origin: ["http://localhost:5173", "https://chatapp-snowy-psi.vercel.app"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 
 }));
-app.use(cookieParser());
+app.use(cookieParser()); // read cookies like req.cookies.token
 const server = http.createServer(app);
 export const io = new Server(server, {
   cors: {
@@ -37,10 +38,7 @@ io.use((socket, next) => {
       return next(new Error("No cookies"));
     }
 
-    const cookies = Object.fromEntries(
-      cookieHeader.split("; ").map(c => c.split("="))
-    );
-
+    const cookies = cookie.parse(cookieHeader);
     const token = cookies.token;
     if (!token) {
       return next(new Error("No token"));

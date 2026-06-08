@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Conversation } from "../models/conversation.model.js"
 import Messages from '../models/message.model.js';
 import getConversationKey from "../utils/getConversationKey.js";
+import { getEmbeddings } from "../utils/getEmbeddings.js";
 
 export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
     const key = getConversationKey(userOneId, userTwoId);
@@ -73,6 +74,7 @@ export const markMessagesAsRead = async (conversationId, userId) => {
 
 export const saveMessage = async (msg, conversation, socket) => {
     try {
+        console.log(getEmbeddings(msg));
         const message = await Messages.create({
             conversationId: conversation._id,
             senderId: socket.userId,
