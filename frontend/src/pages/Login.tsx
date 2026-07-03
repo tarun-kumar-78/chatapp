@@ -1,9 +1,9 @@
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import api from "@/service/axios"
 import { getErrMessage } from "@/utils/getErrMessage"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff } from "lucide-react"
+import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router"
@@ -52,7 +52,7 @@ const Login = () => {
                         </div>
 
                         <form className="space-y-6" onSubmit={form.handleSubmit(login)} method="post">
-                            <div className='relative mb-10'>
+                            <div className='relative'>
                                 <Controller
                                     name="email"
                                     control={form.control}
@@ -63,13 +63,19 @@ const Login = () => {
                                                 {...field}
                                                 id={field.name}
                                                 aria-invalid={fieldState.invalid}
-                                                placeholder="john@gmail.com"
+                                                placeholder="Email"
                                                 autoComplete="off"
                                                 className='h-10'
                                             />
-                                            <div className="min-h-4 -mt-2 ml-1">
+                                            <div className='h-1'>
                                                 {fieldState.invalid && (
-                                                    <FieldError errors={[fieldState.error]} />
+                                                    <div className="group/icon">
+                                                        <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                                                        <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                                                            {fieldState.error?.message}
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         </Field>
@@ -87,14 +93,20 @@ const Login = () => {
                                                 {...field}
                                                 id={field.name}
                                                 aria-invalid={fieldState.invalid}
-                                                placeholder="Enter password"
+                                                placeholder="Password"
                                                 autoComplete="off"
                                                 className='h-10'
                                                 type={!showPass ? "text" : "password"}
                                             />
-                                            <div className="min-h-4 -mt-2 ml-1">
+                                            <div className='h-1'>
                                                 {fieldState.invalid && (
-                                                    <FieldError errors={[fieldState.error]} />
+                                                    <div className="group/icon">
+                                                        <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                                                        <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                                                            {fieldState.error?.message}
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         </Field>

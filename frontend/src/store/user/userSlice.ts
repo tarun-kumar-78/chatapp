@@ -8,7 +8,7 @@ interface UserState {
     user: User | null
     selectedUser: User | null
     conversationId: string | null
-    selectedUserMessages: Message[];
+    selectedUserMessages: { [Key: string]: Message[] }
     unreadMessagesCount: { [Key: string]: number; }
 }
 
@@ -16,7 +16,7 @@ const initialState: UserState = {
     user: null,
     selectedUser: null,
     conversationId: null,
-    selectedUserMessages: [],
+    selectedUserMessages: {},
     unreadMessagesCount: {}
 }
 
@@ -34,8 +34,13 @@ const userSlice = createSlice({
             state.conversationId = action.payload;
             state.unreadMessagesCount[action.payload] = 0;
         },
-        setMessages: (state, action: PayloadAction<Message[]>) => {
-            state.selectedUserMessages = action.payload;
+        setMessages: (state, action: PayloadAction<{ userId: string, messages: Message[] }>) => {
+            const { userId } = action.payload;
+            if (state.selectedUserMessages[userId]) {
+                state.selectedUserMessages[userId] = action.payload.messages;
+            } else {
+                state.selectedUserMessages[action.payload.userId] = action.payload.messages;
+            }
         },
         setUnreadCount: (state, action: PayloadAction<{ [key: string]: number }>) => {
             state.unreadMessagesCount = action.payload;

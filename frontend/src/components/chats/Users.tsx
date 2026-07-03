@@ -4,10 +4,11 @@ import api from '@/service/axios';
 import type { RootState } from '@/store';
 import { addUser, setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
 import type { User } from '@/type/user';
-import { LogOut, Pencil, Search } from 'lucide-react';
+import { CirclePlus, LogOut, Pencil, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
+import imageCompression from 'browser-image-compression';
 import {
     Dialog,
     DialogClose,
@@ -41,10 +42,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { getErrMessage } from '@/utils/getErrMessage';
+import { getChats } from '@/service/messages';
 const Users = () => {
     const [users, setUsers] = useState<User[]>([]);
     const { selectedUser } = useSelector((state: RootState) => state.user);
-    const { user } = useSelector((state: RootState) => state.user);
+    const { user, selectedUserMessages } = useSelector((state: RootState) => state.user);
     const { unreadMessagesCount } = useSelector((state: RootState) => state.user);
     const [openDialog, setOpenDialog] = useState(false);
     const [previewImage, setPreviewImage] = useState<string>();
@@ -53,6 +55,9 @@ const Users = () => {
     const imgRef = useRef<HTMLInputElement | null>(null);
     const navigate = useNavigate();
     const [logout, setLogout] = useState<boolean>(false);
+    const [newChat, setNewChat] = useState<string[]>([]);
+    const [extractUsers, setExtractUser] = useState<User[]>([]);
+    const [addUserBtn, setAddUserBtn] = useState(false);
 
     useEffect(() => {
         const getUsers = async () => {
@@ -63,8 +68,32 @@ const Users = () => {
                 console.log(err);
             }
         }
+        const fetchUnreadCounts = async () => {
+            try {
+                const response = await api.get("/api/message/getUnreadCounts");
+                dispatch(setUnreadCount(response.data.unreadCounts));
+            } catch (err) {
+                console.log("Error fetching unread counts:", err);
+            }
+        };
+        fetchUnreadCounts();
+
+        // Get only users whom with login user chat
+        const getChatUser = async () => {
+            const response = await api.get("api/user/getChatUsers");
+            setNewChat(response.data.users);
+        }
         getUsers();
-    }, []);
+        getChatUser();
+    }, [addUserBtn, dispatch]);
+
+    useEffect(() => {
+        const extractUser = () => {
+            const extractedUsers = users.filter((user) => newChat.includes(user._id.toString()))
+            setExtractUser(addUserBtn ? users : extractedUsers);
+        }
+        extractUser();
+    }, [newChat, users, addUserBtn]);
 
     const getConversationId = async (receiverId: string) => {
         try {
@@ -73,16 +102,6 @@ const Users = () => {
         } catch (err) {
             console.log("Error getting conversation ID:", err);
             return null;
-        }
-    }
-
-    const getMessages = async (conversationId: string) => {
-        try {
-            const response = await api.post("/api/message/getMessages", { conversationId });
-            return response.data.messages;
-        } catch (err) {
-            console.log("Error in getting messages", err);
-            return [];
         }
     }
 
@@ -99,22 +118,11 @@ const Users = () => {
         await readMessages(user.conversationId);
         const conversationId = await getConversationId(user._id);
         dispatch(setConversationId(conversationId));
-        const messages = await getMessages(conversationId);
-        dispatch(setMessages(messages));
-        console.log(messages);
+        if (!selectedUserMessages[user._id]) {
+            const response = await getChats(conversationId, "");
+            dispatch(setMessages({ userId: user._id, messages: response.messages }));
+        }
     }
-
-    useEffect(() => {
-        const fetchUnreadCounts = async () => {
-            try {
-                const response = await api.get("/api/message/getUnreadCounts");
-                dispatch(setUnreadCount(response.data.unreadCounts));
-            } catch (err) {
-                console.log("Error fetching unread counts:", err);
-            }
-        };
-        fetchUnreadCounts();
-    }, []);
 
     const formSchema = z.object({
         name: z.string().min(2, "Name must be at least 2 characters long"),
@@ -163,10 +171,16 @@ const Users = () => {
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+        const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1024,
+            useWebWorker: true,
+        }
         if (!file) return;
-        const previewURL = URL.createObjectURL(file);
+        const compressedImg = await imageCompression(file, options);
+        const previewURL = URL.createObjectURL(compressedImg);
         setPreviewImage(previewURL);
-        setAvatarFile(file);
+        setAvatarFile(compressedImg);
 
 
     };
@@ -185,6 +199,8 @@ const Users = () => {
         }
     }
 
+
+
     return (
         <>
             <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
@@ -193,27 +209,33 @@ const Users = () => {
                         <img src={user?.avatar || previewImage || img} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
                         <div className="">
                             <p className="text-sm font-medium">{user?.name}</p>
-                            <p className="text-xs">Role</p>
                         </div>
                     </div>
                     <Pencil className="h-4 w-4 sm:w-5 sm:h-5 cursor-pointer" onClick={() => setOpenDialog(true)} />
                 </div>
-                <div className="flex my-4 border items-center px-2 rounded-full bg-white">
-                    <Search className='h-4 w-4' />
-                    <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
+                <div className='flex items-center gap-3'>
+
+                    <div className="flex my-4 border items-center px-2 rounded-full bg-white">
+                        <Search className='h-4 w-4' />
+                        <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
+                    </div>
+                    <CirclePlus className='h-5 w-5 cursor-pointer' onClick={() => setAddUserBtn(!addUserBtn)} />
                 </div>
                 <div className='border w-full my-3'></div>
                 <div className='flex justify-between flex-col h-[80%]'>
-
                     <div className='flex flex-col gap-3'>
-
+                        {addUserBtn &&
+                            <div className="flex items-center justify-center gap-3">
+                                <Button className='h-8 w-full'>New Chat</Button>
+                            </div>
+                        }
                         {
-                            users.map((user: User) => {
+                            extractUsers.map((user: User) => {
                                 return (
                                     <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
                                         <div className="flex items-center gap-3">
 
-                                            <img src={user.avatar || img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
+                                            <img src={img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
                                             <div className="">
                                                 <p className="text-sm">{user.name}</p>
                                                 <p className="text-xs text-gray-500">{ }</p>

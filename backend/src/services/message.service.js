@@ -74,13 +74,14 @@ export const markMessagesAsRead = async (conversationId, userId) => {
 
 export const saveMessage = async (msg, conversation, socket) => {
     try {
-        console.log(getEmbeddings(msg));
+        const vector = await getEmbeddings(msg.content);
         const message = await Messages.create({
             conversationId: conversation._id,
             senderId: socket.userId,
             receiverId: msg.recieverId,
             type: msg.type,
             content: msg.content,
+            embeddings: vector
         });
         return message;
     } catch (err) {
@@ -123,3 +124,43 @@ export const uploadImage = async (file, data) => {
     }
 }
 
+export const searchTextService = async (text) => {
+    try {
+        const vector = await getEmbeddings(text);
+        const result = Messages.aggregate([
+            {
+                $vectorSearch: {
+                    index: "vector_index",
+                    path: "embeddings",
+                    queryVector: vector,
+                    numCandidates: 100,
+                    limit: 5
+                }
+            }
+        ]).toArray();
+        return result;
+    } catch (err) {
+        console.log("Error in search text service", err);
+        return err;
+    }
+}
+
+
+export const getChatService = async (chatId, lastMessageId) => {
+    try {
+        const LIMIT = 15;
+        const query = { conversationId: chatId };
+        if (lastMessageId) {
+            query.createdAt = { $lt: new Date(lastMessageId) };
+        }
+        const messages = await Messages.find(query)
+            .select("conversationId senderId type content createdAt")
+            .sort({ createdAt: -1 }).lean();
+        const hasMore = messages.length >= LIMIT;
+        const slicedMessages = hasMore ? messages.slice(0, LIMIT) : messages;
+        return { messages: slicedMessages.reverse(), hasMore, messageId: messages[messages.length - 1].createdAt };
+    } catch (err) {
+        console.error("getChatService err", err);
+        throw err;
+    }
+}

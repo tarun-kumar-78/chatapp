@@ -46,7 +46,11 @@ const messageSchema = new mongoose.Schema(
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "User"
             }
-        ]
+        ],
+        embeddings: {
+            type: [Number],
+            required: true
+        }
     },
     {
         timestamps: { createdAt: true, updatedAt: false }

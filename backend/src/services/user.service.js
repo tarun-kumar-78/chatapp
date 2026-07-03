@@ -41,3 +41,15 @@ export const updateUserProfile = async (userId, updatedData, file) => {
         throw err;
     }
 }
+
+export const getChatUsersService = async (userId) => {
+    try {
+        const conversations = await Conversation.find({ participants: userId });
+        const allParticipants = conversations.flatMap(c => c.participants);
+        const uniqueOtherUsers = [...new Set(allParticipants.filter(id => id.toString() !== userId.toString()))];
+        return uniqueOtherUsers;
+    } catch (err) {
+        console.log("Error in getChatUsersService", err);
+        return err;
+    }
+}

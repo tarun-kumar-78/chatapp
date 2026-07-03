@@ -1,4 +1,4 @@
-import { getOrCreatePrivateConversation, getPrivateMessages, getUnreadMessagesCount, markMessagesAsRead, uploadImage } from "../services/message.service.js";
+import { getChatService, getOrCreatePrivateConversation, getPrivateMessages, getUnreadMessagesCount, markMessagesAsRead, searchTextService, uploadImage } from "../services/message.service.js";
 
 export const getConversationId = async (req, res) => {
     try {
@@ -54,5 +54,28 @@ export const shareImage = async (req, res) => {
     } catch (err) {
         console.log("Error in uploading image controller", err);
         res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+}
+
+export const searchTextController = async (req, res) => {
+    try {
+        const { text } = req.body;
+        const result = await searchTextService(text);
+        return res.status(200).json({ success: true, res: result });
+    } catch (err) {
+        console.log("Error in search controller", err);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+}
+
+export const getChatsController = async (req, res) => {
+    try {
+        const { lastMessageId } = req.query;
+        const { conversationId } = req.params;
+        const { messages, hasMore, messageId } = await getChatService(conversationId, lastMessageId);
+        return res.status(200).json({ success: true, messages: messages, hasMore: hasMore, lastMessageId: messageId });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }

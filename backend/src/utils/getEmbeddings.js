@@ -1,16 +1,13 @@
-import { GoogleGenAI } from "@google/genai";
-import { GOOGLE_GEMINI_API_KEY } from "../db/env.js";
+import { GEMINI_API_KEY } from "../db/env.js";
+import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai'
 
+const embeddings = new GoogleGenerativeAIEmbeddings({
+    model: "gemini-embedding-2-preview",
+    apiKey: GEMINI_API_KEY,
+    output_dimensionality: 768
+});
 
-const genAI = new GoogleGenAI({ apiKey: GOOGLE_GEMINI_API_KEY });
-
-
-export async function getEmbeddings(text) {
-    const response = await genAI.models.embedContent({
-        model: "gemini- 2.0 - flash",
-        contents: text
-    })
-    return response.embeddings[0].values;
+export async function getEmbeddings(content) {
+    return await embeddings.embedQuery(content);
 }
-
 

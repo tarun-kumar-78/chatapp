@@ -5,10 +5,9 @@ import { Link, useNavigate } from 'react-router';
 import api from '@/service/axios';
 import { toast } from 'sonner';
 import { getErrMessage } from '@/utils/getErrMessage';
-
-import { Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 const Register = () => {
@@ -17,7 +16,8 @@ const Register = () => {
   const formSchema = z.object({
     name: z.string().min(3, "Name should be more than three characters").max(15, "Name should not greater than 15 characters"),
     email: z.email(),
-    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/, "Password should contain uppercase,lowercase, number, special character")
+    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/, "Contain alphanumeric characters and special characters"),
+    phone: z.string().min(10, "Mobile number contain 10 digits")
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -25,7 +25,8 @@ const Register = () => {
     defaultValues: {
       name: "",
       email: "",
-      password: ""
+      password: "",
+      phone: ""
     }
   })
 
@@ -49,7 +50,7 @@ const Register = () => {
           className="p-6 rounded-lg bg-white border border-slate-300 shadow-xs md:p-6 dark:bg-neutral-800 dark:border-neutral-700">
           <h1 className="text-slate-900 text-center text-2xl font-bold dark:text-slate-50">Create an account</h1>
           <form className="space-y-6 mt-10" onSubmit={form.handleSubmit(register)}>
-            <div className='relative mb-10'>
+            <div className='relative'>
               <Controller
                 name="name"
                 control={form.control}
@@ -60,20 +61,27 @@ const Register = () => {
                       {...field}
                       id={field.name}
                       aria-invalid={fieldState.invalid}
-                      placeholder="Tarun Kumar"
+                      placeholder="Name"
                       autoComplete="off"
                       className='h-10'
                     />
-                    <div className="min-h-4 -mt-2 ml-1">
+                    <div className='h-1'>
+
                       {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
+                        <div className="group/icon">
+                          <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                          <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                            {fieldState.error?.message}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Field>
                 )}
               />
             </div>
-            <div className='relative mb-10'>
+            <div className='relative'>
               <Controller
                 name="email"
                 control={form.control}
@@ -84,13 +92,19 @@ const Register = () => {
                       {...field}
                       id={field.name}
                       aria-invalid={fieldState.invalid}
-                      placeholder="john@gmail.com"
+                      placeholder="Email"
                       autoComplete="off"
                       className='h-10'
                     />
-                    <div className="min-h-4 -mt-2 ml-1">
+                    <div className='h-1'>
                       {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
+                        <div className="group/icon">
+                          <AlertCircle className="absolute -right-5  top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                          <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                            {fieldState.error?.message}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Field>
@@ -113,16 +127,55 @@ const Register = () => {
                       className='h-10'
                       type={!showPass ? "text" : "password"}
                     />
-                    <div className="min-h-10 -mt-2 ml-1">
+                    <div className='h-1'>
+
                       {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
+                        <div className="group/icon">
+                          <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                          <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                            {fieldState.error?.message}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Field>
                 )}
               />
-              {showPass ? <EyeOff className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} /> :
-                <Eye className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} />}
+              {showPass ? <EyeOff className='absolute top-2.5 right-3 size-5' onClick={() => setShowPass(!showPass)} /> :
+                <Eye className='absolute top-2.5 right-3 size-5' onClick={() => setShowPass(!showPass)} />}
+            </div>
+            <div className='relative'>
+              <Controller
+                name="phone"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Phone</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Mobile"
+                      autoComplete="off"
+                      className='h-10'
+                    />
+                    <div className='h-1'>
+
+                      {fieldState.invalid && (
+                        <div className="group/icon">
+                          <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+
+                          <div className="absolute right-0 top-9 hidden w-max rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                            {fieldState.error?.message}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                  </Field>
+                )}
+              />
             </div>
             <button type="submit"
               className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">

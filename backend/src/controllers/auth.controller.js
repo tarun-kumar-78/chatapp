@@ -3,9 +3,9 @@ import { User } from "../models/user.model.js";
 import generateToken from "../utils/generateToken.js";
 
 export const signupController = async (req, res) => {
-  const { email, name, password, avatar } = req.body;
+  const { email, name, password, avatar, phone } = req.body;
   try {
-    if (!email || !name || !password)
+    if (!email || !name || !password || !phone)
       return res
         .status(400)
         .json({ success: false, message: "All fields are required" });
@@ -23,6 +23,7 @@ export const signupController = async (req, res) => {
     const createdUser = await User.create({
       email,
       name,
+      phoneNo: phone,
       password: hashedPass,
       lastSeenAt: Date.now(),
     });

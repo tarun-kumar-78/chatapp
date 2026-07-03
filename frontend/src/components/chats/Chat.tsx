@@ -1,316 +1,168 @@
-import { Bell, BellOff, Camera, EllipsisVertical, SendHorizontal, Smile } from "lucide-react"
 import img from '@/assets/chatapp-image.jpg';
-import { Input } from "../ui/input";
+import { EllipsisVertical, SendHorizontal, Smile } from 'lucide-react';
+import { Input } from '../ui/input';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '@/store';
+import { useEffect, useRef, useState } from 'react';
+import type { Message } from '@/type/message';
+import { getChats } from '@/service/messages';
+import { socket } from '@/socket/socket';
+import { extractTime12Hour, getDateLabel } from '@/utils/extractTime';
+import { incrementUnreadCount, setMessages } from '@/store/user/userSlice';
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
-import { useEffect, useRef, useState } from "react";
-import { socket } from "@/socket/socket";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import type { Message } from "@/type/message";
-import { extractTime12Hour, getDateLabel, isSameDay } from "@/utils/extractTime";
-import { incrementUnreadCount } from "@/store/user/userSlice";
-import audio from '@/assets/whatsapp_pc.mp3';
-import { Scrollbar } from 'react-scrollbars-custom';
-import { Image } from 'lucide-react';
-import api from "@/service/axios";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import audio_mp3 from '@/assets/whatsapp_pc.mp3';
 
 const Chat = () => {
+
+    // Redux State
+    const { user, selectedUser, conversationId, selectedUserMessages } = useSelector((state: RootState) => state.user);
+
+    // Component State
+    const [inputMessage, setInputMessage] = useState("");
+    const [loadOlderMessages, setLoadOlderMessages] = useState(false);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [openEmoji, setOpenEmoji] = useState(false);
+
+    // ref elements
+    const chatDivRef = useRef<HTMLDivElement>(null);
+    const scrollDiv = useRef<HTMLDivElement>(null);
     const emojiRef = useRef<HTMLDivElement | null>(null);
-    const [message, setMessage] = useState<string>("");
-    const { user } = useSelector((state: RootState) => state.user);
-    const { selectedUser } = useSelector((state: RootState) => state.user);
-    const { selectedUserMessages } = useSelector((state: RootState) => state.user);
-    const { conversationId } = useSelector((state: RootState) => state.user);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [mute, setMute] = useState(false);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    const videoRef = useRef<HTMLVideoElement | null>(null);
-    const [cameraOpen, setCameraOpen] = useState<boolean>(false);
-    const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-    const imgRef = useRef<HTMLInputElement>(null);
     const dispatch = useDispatch();
-    const handleEmoji = (e: EmojiClickData) => {
-        setMessage(message + e.emoji);
-        setOpenEmoji(false);
+
+
+    // Handle User Input Message state
+    const handleInputMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputMessage(e.target.value);
     }
 
     useEffect(() => {
-        setMessages(selectedUserMessages);
-    }, [selectedUserMessages]);
-
-    useEffect(() => {
-        audioRef.current = new Audio(audio);
-    }, []);
-
-    useEffect(() => {
+        // Handle mouse click event to close emoji window
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target;
-
             if (!(target instanceof Node)) return;
-
             if (emojiRef.current && !emojiRef.current.contains(target)) {
                 setOpenEmoji(false);
             }
-        };
+        }
+
         document.addEventListener("mousedown", handleClickOutside);
+
+        // Show recieved message through socket io
         socket.on("recieve-message", (message) => {
+            if (!selectedUser || !conversationId) return;
             if (message.conversationId !== conversationId) {
-                audioRef.current?.play();
+                const audio = new Audio(audio_mp3);
+                audio.play();
                 dispatch(incrementUnreadCount(message.conversationId));
             } else {
-
-                setMessages((prev) => {
-                    const updated = [...prev, message];
-                    return updated;
-                });
+                dispatch(setMessages({ userId: selectedUser?._id, messages: [...selectedUserMessages[selectedUser?._id], message] }))
             }
-        });
+        })
         return () => {
+            socket.off("recieve-message")
             document.removeEventListener("mousedown", handleClickOutside);
-            socket.off("recieve-message");
-        };
+        }
+    })
 
-    });
-
-
-
-    const handleMessageInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setMessage(e.target.value);
-    }
-
-    const handleEnterPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter" && message !== "")
-            sendMessage();
-    }
-
-    const sendMessage = () => {
-        if (!selectedUser || !user || message === "") return;
-        const msg: Message = {
+    // Method to send message
+    const sendMessage = async () => {
+        if (!inputMessage || !user || !selectedUser) return;
+        const message: Message = {
             _id: Date.now().toString(),
-            senderId: user._id,
-            recieverId: selectedUser?._id,
-            content: message,
-            createdAt: new Date().toString(),
+            senderId: user?._id,
+            recieverId: selectedUser._id,
+            content: inputMessage,
+            createdAt: new Date(Date.now()).toString(),
             type: "text"
         }
-        setMessages((prev) => [...prev, msg]);
-        socket.emit("message", msg);
-        setMessage("");
-
+        dispatch(setMessages({ userId: message.recieverId, messages: [...selectedUserMessages[selectedUser._id], message] }));
+        socket.emit("message", message);
+        setInputMessage("")
     }
 
-    const startCamera = async () => {
-        setCameraOpen(true);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            setMediaStream(stream);
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                videoRef.current.play();
-            }
-        } catch (err) {
-            console.error("Error accessing camera:", err);
+    // Event to send message on press enter
+    const handleEnterPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && inputMessage !== "") {
+            sendMessage()
+            setInputMessage("");
         }
     }
 
-    const stopCamera = async () => {
-        mediaStream?.getTracks().forEach(track => track.stop());
-        setCameraOpen(false);
-        setMediaStream(null);
-        if (videoRef.current) {
-            videoRef.current.srcObject = null;
-        }
+    // Handle Emoji 
+    const handleEmoji = (e: EmojiClickData) => {
+        setInputMessage(inputMessage + e.emoji)
+        setOpenEmoji(false);
     }
 
-    const captureImage = async (): Promise<Blob | null> => {
-        if (!videoRef.current) return null;
-
-        const video = videoRef.current;
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(video, 0, 0);
-        stopCamera();
-        return new Promise((resolve) => {
-            canvas.toBlob(
-                (blob) => resolve(blob),
-                "image/jpeg",
-                0.7 // compression (important)
-            );
-        });
-    };
-
-    const clickImage = async () => {
-        const imageBlob = await captureImage();
-        if (imageBlob) {
-            const formData = new FormData();
-            formData.append("image", imageBlob);
-        }
-        stopCamera();
-    }
-
-    const shareImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        try {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append("image", file);
-            if (user && selectedUser) {
-                formData.append("senderId", user._id.toString());
-                formData.append("receiverId", selectedUser._id.toString());
-            }
-            const response = await api.post("/api/message/share-image", formData);
-            console.log(response.data.imageUrl);
-            if (!user || !selectedUser) return;
-            const msg: Message = {
-                _id: Date.now().toString(),
-                senderId: user._id,
-                recieverId: selectedUser?._id,
-                content: response.data.imageUrl,
-                createdAt: new Date().toString(),
-                type: "image",
-            }
-            socket.emit("message", msg);
-            setMessages(prev => [...prev, msg]);
-        } catch (err) {
-            console.log("Error in share image api", err);
+    // Fetch Older messages when use scroll to top
+    const handleScroll = async () => {
+        if (!chatDivRef) return;
+        const container = chatDivRef.current;
+        if (loadOlderMessages || !hasMoreMessages) return;
+        if (container?.scrollTop === 0 && conversationId && selectedUser) {
+            const messages = selectedUserMessages[selectedUser?._id]
+            setLoadOlderMessages(true);
+            console.log("Scroll to top");
+            const response = await getChats(conversationId, messages[0].createdAt);
+            dispatch(setMessages({ userId: selectedUser._id, messages: [...response.messages, ...selectedUserMessages[selectedUser._id]] }));
+            setHasMoreMessages(response.hasMore);
+            setLoadOlderMessages(false);
         }
     }
 
     return (
-        <div className="border w-full md:flex-1 hidden md:flex flex-col relative">
-            {selectedUser ?
-                <>
-                    <div className="flex items-center justify-between p-3 border-b">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center rounded-full h-10 w-10 overflow-hidden">
-                                <img src={selectedUser.avatar || img} alt="profile image" className="h-full w-full rounded-full" />
-                            </div>
-                            <div className="flex gap-3 items-center">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <EllipsisVertical className="h-5 w-5 cursor-pointer" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setMute(prev => !prev)}>
-                                                {mute ? "Unmute notifications" : "Mute notifications"}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem>Clear chat</DropdownMenuItem>
-                                            <DropdownMenuItem>Export chat</DropdownMenuItem>
-                                            <DropdownMenuItem>Block</DropdownMenuItem>
-                                        </DropdownMenuGroup>
-
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                            </div>
-                        </div>
-                        <div>
-                            {mute ? <BellOff onClick={() => setMute(false)} className="h-5 w-5 cursor-pointer" /> : <Bell className="h-5 w-5 cursor-pointer" onClick={() => setMute(true)} />}
-                        </div>
+        selectedUser ? <div className="flex flex-col w-full h-screen">
+            <div className="h-14 bg-[#95CCDD] flex justify-between p-4 items-center">
+                <div className='flex gap-2 items-center'>
+                    <img src={img} alt="profile image" className='object-cover h-10 w-10 rounded-full' />
+                    <div className='flex flex-col'>
+                        <span className='text-sm'>{selectedUser.name}</span>
+                        <span className='text-[10px] text-gray-500'>Offline</span>
                     </div>
-                    <div className="flex-1 flex flex-col gap-3 justify-end p-3">
 
-                        {cameraOpen && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                                <div className="bg-white rounded-xl p-4 shadow-lg w-80">
-                                    <video
-                                        ref={videoRef}
-                                        className="rounded-lg w-full h-56 object-cover"
-                                    />
+                </div>
+                <div>
+                    <EllipsisVertical className='cursor-pointer' />
+                </div>
+            </div>
+            <div ref={chatDivRef} className='flex-1 overflow-y-auto no-scrollbar' onScroll={handleScroll}>
+                <div className='min-h-full flex flex-col justify-end p-4 gap-3'>
+                    {loadOlderMessages &&
+                        <div className="flex justify-center items-center">
+                            <div className="h-7 w-7 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                        </div>}
 
-                                    <div className="flex justify-between mt-3">
-                                        <button
-                                            className="px-3 py-1 bg-gray-200 rounded cursor-pointer"
-                                            onClick={stopCamera}
-                                        >
-                                            Cancel
-                                        </button>
+                    {selectedUserMessages[selectedUser._id]?.map((message, i) => {
+                        const getDate = getDateLabel(new Date(message.createdAt));
+                        const isSame = (i !== 0 && getDateLabel(new Date(selectedUserMessages[selectedUser?._id][i - 1].createdAt)) === getDate);
+                        return (
+                            <div key={message._id}>
+                                {(i === 0 || !isSame) && <p className='text-center'>{getDate}</p>}
+                                <div className={`flex ${message.senderId === user?._id ? "justify-end" : "justify-start"}`}>
+                                    <div className={`flex items-center h-10 gap-2 px-2 ${message.senderId === user?._id ? "bg-[#25D366]" : "bg-[#34B7F1]"} rounded-md  max-w-[70%]`}>
 
-                                        <button
-                                            className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer"
-                                            onClick={clickImage}
-                                        >
-                                            Capture
-                                        </button>
+                                        <p key={message._id} className=''>{message.content}</p>
+                                        <span className={`text-[10px] self-baseline-last ${message.senderId === user?._id ? "right-2" : "left-2"} text-gray-700`}>{extractTime12Hour(message.createdAt)}</span>
                                     </div>
                                 </div>
+
                             </div>
-                        )}
-                        <Scrollbar noScrollX className="[&_.ScrollbarsCustom-Content]:flex [&_.ScrollbarsCustom-Content]:flex-col [&_.ScrollbarsCustom-Content]:justify-end"
-                            trackYProps={{
-                                style: {
-                                    width: 0,
-                                    background: "transparent"
-                                }
-                            }}>
+                        )
 
-                            {messages?.map((message: Message, index) => {
-                                const msgDate = new Date(message.createdAt);
-                                const prevMsg = messages[index - 1];
-                                const showDate =
-                                    !prevMsg ||
-                                    !isSameDay(msgDate, new Date(prevMsg.createdAt));
-                                return (
-                                    <div key={message._id}>
-                                        {showDate && (
-                                            <div className="text-center my-3 text-gray-500 text-sm">
-                                                {getDateLabel(msgDate)}
-                                            </div>
-                                        )}
-                                        <div className={`flex items-end my-3 px-2 ${user?._id === message.senderId ? "flex-row-reverse" : ""}  gap-2`}>
-                                            <img src={`${user?._id === message.senderId ? user.avatar || img : selectedUser.avatar || img}`} alt="image" className="h-6 w-6 rounded-full" />
-                                            <div className={`bg-blue-500/30 min-w-1/5 rounded-md relative ${message.type == "text" && "pt-2 pb-3 px-2"} ${user?._id === message.senderId ? "bg-green-500/30" : "bg-blue-500/30"}`}>
-                                                {message.type === "text" ? <p className="text-sm mb-1">{message.content}</p> : <img src={message.content} alt="sent image" className="max-w-xs max-h-50 rounded-md" />}
-                                                <span className="text-[10px] text-gray-400 absolute z-50 right-1.5 bottom-0.5">
-                                                    {extractTime12Hour(message.createdAt)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-
-                        </Scrollbar>
-
-                    </div>
-                    <div className="flex items-center justify-center gap-2 px-3 py-2 border-t bg-blue-400/30">
-                        <div className="border border-white flex justify-between px-2 rounded-full w-4/5">
-                            <div className="flex items-center w-full pr-3 rounded-full">
-
-                                <Input className="border-none focus-visible:ring-0" placeholder="Enter message" onChange={handleMessageInput} value={message} onKeyDown={handleEnterPress} />
-                            </div>
-                            <div className="absolute right-1.5 bottom-14" ref={emojiRef}>
-                                <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-500">
-
-                                <Smile className="cursor-pointer" onClick={() => setOpenEmoji(!openEmoji)} />
-                                <Camera className="cursor-pointer" onClick={startCamera} />
-                                <Image className="cursor-pointer" onClick={() => imgRef.current?.click()} />
-                                <input type="file" className="hidden" ref={imgRef} onChange={shareImage} accept="image/*" />
-                            </div>
-                        </div>
-                        <SendHorizontal className={`cursor-pointer ${message === "" && "text-gray-400"}`} onClick={sendMessage} />
-                    </div>
-                </>
-                : <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500 border rounded-md p-2 bg-gray-100">Select a user to start chat</p>
+                    })}
+                    <div ref={scrollDiv}></div>
                 </div>
-            }
-        </div>
+
+            </div>
+            <div className="h-15 bg-[#95CCDD] flex items-center justify-center gap-2">
+                <Input onKeyDown={handleEnterPress} value={inputMessage} placeholder='Type message here' className='h-10 w-[70%]' onChange={handleInputMessage} />
+                <div className="absolute right-1.5 bottom-14" ref={emojiRef}>
+                    <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
+                </div>
+                <SendHorizontal className={`h-7 w-7 cursor-pointer ${inputMessage.trim() === "" ? "cursor-not-allowed opacity-20" : "cursor-pointer text-blue-600"}`} onClick={sendMessage} />
+                <Smile className='h-7 w-7 cursor-pointer' onClick={() => setOpenEmoji(!openEmoji)} />
+            </div>
+        </div > : <div className='w-full flex justify-center items-center'><p className='bg-gray-300 p-3 rounded-md font-semibold'>Select a user to chat</p></div>
     )
 }
 
