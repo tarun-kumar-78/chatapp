@@ -53,11 +53,13 @@ io.use((socket, next) => {
   }
 })
 
+const users_list = new Set()
 io.on("connection", (socket) => {
   console.log("Client connected", socket.userId);
   socket.join(socket.userId);
+  users_list.add(socket.userId);
+  io.emit("online", [...users_list]);
   socket.on("message", async (msg) => {
-
     const conversation = await getOrCreatePrivateConversation(msg.recieverId, socket.userId);
 
     if (msg.type === "text") {
@@ -75,7 +77,9 @@ io.on("connection", (socket) => {
   })
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
+    console.log("Client disconnected:", socket.userId);
+    users_list.delete(socket.userId);
+    io.emit("online", [...users_list]);
   });
 });
 

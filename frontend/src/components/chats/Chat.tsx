@@ -22,17 +22,20 @@ const Chat = () => {
     const [loadOlderMessages, setLoadOlderMessages] = useState(false);
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [openEmoji, setOpenEmoji] = useState(false);
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
     // ref elements
     const chatDivRef = useRef<HTMLDivElement>(null);
     const scrollDiv = useRef<HTMLDivElement>(null);
     const emojiRef = useRef<HTMLDivElement | null>(null);
+    const scrollToBottom = useRef(true);
     const dispatch = useDispatch();
 
 
     // Handle User Input Message state
     const handleInputMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInputMessage(e.target.value);
+        scrollToBottom.current = true;
     }
 
     useEffect(() => {
@@ -46,6 +49,11 @@ const Chat = () => {
         }
 
         document.addEventListener("mousedown", handleClickOutside);
+
+        // socket event to check user is online or not
+        socket.on("online", (usersList) => {
+            setOnlineUsers(usersList);
+        })
 
         // Show recieved message through socket io
         socket.on("recieve-message", (message) => {
@@ -102,13 +110,21 @@ const Chat = () => {
         if (container?.scrollTop === 0 && conversationId && selectedUser) {
             const messages = selectedUserMessages[selectedUser?._id]
             setLoadOlderMessages(true);
-            console.log("Scroll to top");
             const response = await getChats(conversationId, messages[0].createdAt);
             dispatch(setMessages({ userId: selectedUser._id, messages: [...response.messages, ...selectedUserMessages[selectedUser._id]] }));
             setHasMoreMessages(response.hasMore);
             setLoadOlderMessages(false);
+            scrollToBottom.current = false;
         }
     }
+
+    useEffect(() => {
+        if (!scrollToBottom.current || !chatDivRef) return;
+        chatDivRef.current?.scrollTo({
+            top: chatDivRef.current.scrollHeight,
+            behavior: "smooth"
+        })
+    }, [selectedUserMessages, inputMessage]);
 
     return (
         selectedUser ? <div className="flex flex-col w-full h-screen">
@@ -117,7 +133,7 @@ const Chat = () => {
                     <img src={img} alt="profile image" className='object-cover h-10 w-10 rounded-full' />
                     <div className='flex flex-col'>
                         <span className='text-sm'>{selectedUser.name}</span>
-                        <span className='text-[10px] text-gray-500'>Offline</span>
+                        <span className='text-[10px] text-gray-600'>{`${onlineUsers.includes(selectedUser._id) ? "Online" : `Last Seen ${extractTime12Hour(selectedUser.lastSeenAt)}`} `}</span>
                     </div>
 
                 </div>
