@@ -5,6 +5,7 @@ import { Toaster } from "sonner"
 import Home from './pages/Home';
 import { Provider } from "react-redux";
 import store from '@/store/index';
+import ResetPassword from "./components/auth/ResetPassword";
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
 
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<Home />} />
           </Routes>
 

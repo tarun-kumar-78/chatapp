@@ -1,5 +1,5 @@
 
-import { getChatUsersService, getUsersWithConversationId, updateUserProfile } from "../services/user.service.js";
+import { getChatUsersService, getUsersWithConversationId, resetPasswordService, updateUserProfile, verifyPasswordService } from "../services/user.service.js";
 
 
 export const updateProfile = async (req, res) => {
@@ -42,5 +42,28 @@ export const getChatUsersController = async (req, res) => {
     } catch (err) {
         console.log("Error in getChatUsers", err);
         return res.json({ success: false, message: "Internal Server Error" });
+    }
+}
+
+export const resetPasswordController = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return;
+        await resetPasswordService(email);
+        return res.status(200).json({ success: true, message: "If email exists password reset link will send to your email" })
+    } catch (err) {
+        console.error("Error in reset password controller", err);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
+export const verifyPasswordController = async (req, res) => {
+    try {
+        const { password, token, email } = req.body;
+        if (!password || !email || !token) res.status(400).json({ success: false, message: "All fields are required" });
+        const response = await verifyPasswordService(password, token, email);
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }

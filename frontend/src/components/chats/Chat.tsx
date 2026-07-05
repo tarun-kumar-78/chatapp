@@ -11,6 +11,8 @@ import { extractTime12Hour, getDateLabel } from '@/utils/extractTime';
 import { incrementUnreadCount, setMessages } from '@/store/user/userSlice';
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
 import audio_mp3 from '@/assets/whatsapp_pc.mp3';
+import { SkeletonWrapper, SkeletonProvider } from 'react-skeletonify';
+import "react-skeletonify/dist/index.css";
 
 const Chat = () => {
 
@@ -26,7 +28,6 @@ const Chat = () => {
 
     // ref elements
     const chatDivRef = useRef<HTMLDivElement>(null);
-    const scrollDiv = useRef<HTMLDivElement>(null);
     const emojiRef = useRef<HTMLDivElement | null>(null);
     const scrollToBottom = useRef(true);
     const dispatch = useDispatch();
@@ -127,6 +128,7 @@ const Chat = () => {
     }, [selectedUserMessages, inputMessage]);
 
     return (
+
         selectedUser ? <div className="flex flex-col w-full h-screen">
             <div className="h-14 bg-[#95CCDD] flex justify-between p-4 items-center">
                 <div className='flex gap-2 items-center'>
@@ -141,35 +143,49 @@ const Chat = () => {
                     <EllipsisVertical className='cursor-pointer' />
                 </div>
             </div>
+
             <div ref={chatDivRef} className='flex-1 overflow-y-auto no-scrollbar' onScroll={handleScroll}>
-                <div className='min-h-full flex flex-col justify-end p-4 gap-3'>
-                    {loadOlderMessages &&
-                        <div className="flex justify-center items-center">
-                            <div className="h-7 w-7 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-                        </div>}
+                <div className='min-h-full flex flex-col justify-end p-3 gap-3'>
+                    <SkeletonProvider
+                        config={{
+                            animation: "animation-2",
+                            borderRadius: "8px",
+                            animationSpeed: 2,
+                        }}>
+                        <SkeletonWrapper loading={!selectedUserMessages[selectedUser._id] ? true : false}>
+                            {loadOlderMessages &&
+                                <div className="flex justify-center items-center">
+                                    <div className="h-7 w-7 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                                </div>}
 
-                    {selectedUserMessages[selectedUser._id]?.map((message, i) => {
-                        const getDate = getDateLabel(new Date(message.createdAt));
-                        const isSame = (i !== 0 && getDateLabel(new Date(selectedUserMessages[selectedUser?._id][i - 1].createdAt)) === getDate);
-                        return (
-                            <div key={message._id}>
-                                {(i === 0 || !isSame) && <p className='text-center'>{getDate}</p>}
-                                <div className={`flex ${message.senderId === user?._id ? "justify-end" : "justify-start"}`}>
-                                    <div className={`flex items-center h-10 gap-2 px-2 ${message.senderId === user?._id ? "bg-[#25D366]" : "bg-[#34B7F1]"} rounded-md  max-w-[70%]`}>
+                            {selectedUserMessages[selectedUser._id]?.map((message, i) => {
+                                const getDate = getDateLabel(new Date(message.createdAt));
+                                const isSame = (i !== 0 && getDateLabel(new Date(selectedUserMessages[selectedUser?._id][i - 1].createdAt)) === getDate);
+                                return (
 
-                                        <p key={message._id} className=''>{message.content}</p>
-                                        <span className={`text-[10px] self-baseline-last ${message.senderId === user?._id ? "right-2" : "left-2"} text-gray-700`}>{extractTime12Hour(message.createdAt)}</span>
+                                    <div key={message._id}>
+                                        {(i === 0 || !isSame) && <p className='text-center my-4 text-sm max-sm:text-[.78rem]'>{getDate}</p>}
+                                        <div className={`flex ${message.senderId === user?._id ? "justify-end" : "justify-start"}`}>
+                                            <div className={`flex gap-1 px-2 ${message.senderId === user?._id ? "bg-[#25D366]" : "bg-[#34B7F1]"} rounded-md max-w-[90%]`}>
+
+                                                <p key={message._id} className='py-2 w-fit text-sm max-sm:text-[.78rem]'>{message.content}</p>
+                                                <p className={`text-[9px] self-end  w-11  ${message.senderId === user?._id ? "right-2" : "left-2"} text-gray-700`}>{extractTime12Hour(message.createdAt)}</p>
+                                            </div>
+                                        </div>
+
                                     </div>
-                                </div>
 
-                            </div>
-                        )
+                                )
 
-                    })}
-                    <div ref={scrollDiv}></div>
+                            })}
+                        </SkeletonWrapper>
+                    </SkeletonProvider>
+
                 </div>
 
             </div>
+
+
             <div className="h-15 bg-[#95CCDD] flex items-center justify-center gap-2">
                 <Input onKeyDown={handleEnterPress} value={inputMessage} placeholder='Type message here' className='h-10 w-[70%]' onChange={handleInputMessage} />
                 <div className="absolute right-1.5 bottom-14" ref={emojiRef}>
@@ -179,6 +195,7 @@ const Chat = () => {
                 <Smile className='h-7 w-7 cursor-pointer' onClick={() => setOpenEmoji(!openEmoji)} />
             </div>
         </div > : <div className='w-full flex justify-center items-center'><p className='bg-gray-300 p-3 rounded-md font-semibold'>Select a user to chat</p></div>
+
     )
 }
 

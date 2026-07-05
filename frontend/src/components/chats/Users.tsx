@@ -203,7 +203,7 @@ const Users = () => {
 
     return (
         <>
-            <div className="border bg-gray-300/30 w-full md:w-[20%] min-w-70 p-4">
+            <div className="border bg-gray-300/30 w-full hidden lg:block lg:w-[20%] min-w-70 p-4">
                 <div className="flex justify-between items-center h-12">
                     <div className="flex items-center gap-3">
                         <img src={user?.avatar || previewImage || img} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />

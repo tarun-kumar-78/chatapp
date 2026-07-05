@@ -33,6 +33,8 @@ const Home = () => {
         socket.on("connect_error", (err) => {
             console.log("connection error", err.message);
         })
+
+
         return () => {
             socket.disconnect();
             socket.off("connect");

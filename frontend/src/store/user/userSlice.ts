@@ -17,7 +17,7 @@ const initialState: UserState = {
     selectedUser: null,
     conversationId: null,
     selectedUserMessages: {},
-    unreadMessagesCount: {}
+    unreadMessagesCount: {},
 }
 
 const userSlice = createSlice({
@@ -53,6 +53,9 @@ const userSlice = createSlice({
                 state.unreadMessagesCount[conversationId] = 1;
             }
         },
+
+
+
     }
 });
 
