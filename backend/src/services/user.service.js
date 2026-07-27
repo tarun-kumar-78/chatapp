@@ -2,7 +2,7 @@ import { Conversation } from "../models/conversation.model.js";
 import { User } from "../models/user.model.js"
 import crypto from 'crypto';
 import { ResetPassword } from '../models/resetPassword.model.js';
-import { sendEmail } from "../lib/emailConfig.js";
+import { sendEmail, transport } from "../lib/emailConfig.js";
 import bcrypt from "bcryptjs";
 
 export const getUsersWithConversationId = async (userId) => {
@@ -72,6 +72,8 @@ export const resetPasswordService = async (email) => {
             });
             setImmediate(async () => {
                 try {
+                    await transport.verify();
+                    console.log("Connection established");
                     await sendEmail(email, resetLink, user.name);
                     console.log('Email sent');
                 } catch (err) {
