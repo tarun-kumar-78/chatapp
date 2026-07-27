@@ -236,6 +236,7 @@ const Chat = () => {
                 dispatch(setMessages({ userMessages: { [selectedUser._id]: { messages: res.messages, loading: false } } }));
             }
             setShowCheckbox(false);
+            setDeleteMessages([]);
         } catch (err) {
             const msg = getErrMessage(err);
             toast.error(msg);
@@ -308,7 +309,7 @@ const Chat = () => {
                                             </div>
                                             <div className={`flex w-full ${message.senderId === user?._id ? "justify-end" : "justify-start"}`}>
 
-                                                {!selectedUserMessages.userMessages[selectedUser._id]?.loading && message.type === 'text' ? <div className={`group relative flex gap-1 px-2 ${message.senderId === user?._id ? `bg-[#25D366]` : `bg-[#34B7F1]`} rounded-md max-w-[90%]`}>
+                                                {!selectedUserMessages.userMessages[selectedUser._id]?.loading && message.type === 'text' ? <div className={`group relative flex gap-1 pl-2 ${message.senderId === user?._id ? `bg-[#25D366]` : `bg-[#34B7F1]`} rounded-md max-w-[90%]`}>
 
                                                     <p key={message._id} className='py-2 w-fit text-sm max-sm:text-[.78rem]'>{message.content}</p>
                                                     <p className={`text-[9px] self-end w-11  ${message.senderId === user?._id ? "right-2" : "left-2"} text-gray-700`}>{extractTime12Hour(message.createdAt)}</p>

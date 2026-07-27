@@ -63,13 +63,12 @@ export const resetPasswordService = async (email) => {
         const user = await User.findOne({ email: email }).lean();
         if (user) {
             const resetToken = crypto.randomBytes(32).toString("hex");
-            console.log(resetToken);
             const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
             const resetLink = `http://localhost:5173/reset-password?token=${resetToken}&email=${user.email}`
             await ResetPassword.create({
                 user: user,
                 token: hashedToken,
-                expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+                expireAt: new Date(Date.now() + 15 * 60 * 1000),
             });
             await sendEmail(email, resetLink, user.name);
 

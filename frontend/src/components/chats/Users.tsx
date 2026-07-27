@@ -280,8 +280,8 @@ const Users = () => {
                             })
                         }
                     </div>
-                    <div className='bg-black hidden lg:flex cursor-pointer h-10 rounded-sm  items-center justify-center'>
-                        <p className='text-white' onClick={() => setLogoutDialog(true)}>Logout</p>
+                    <div className='bg-black hidden lg:flex cursor-pointer h-10 rounded-sm  items-center justify-center' onClick={() => setLogoutDialog(true)}>
+                        <p className='text-white'>Logout</p>
                     </div>
 
                 </div>
