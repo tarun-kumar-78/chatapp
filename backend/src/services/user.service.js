@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { ResetPassword } from '../models/resetPassword.model.js';
 import { sendEmail } from "../lib/emailConfig.js";
 import bcrypt from "bcryptjs";
+import { FRONT_END_URL } from "../db/env.js";
 
 export const getUsersWithConversationId = async (userId) => {
     try {
@@ -64,7 +65,7 @@ export const resetPasswordService = async (email) => {
         if (user) {
             const resetToken = crypto.randomBytes(32).toString("hex");
             const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-            const resetLink = `http://localhost:5173/reset-password?token=${resetToken}&email=${user.email}`
+            const resetLink = `${FRONT_END_URL}/reset-password?token=${resetToken}&email=${user.email}`
             await ResetPassword.create({
                 user: user,
                 token: hashedToken,
