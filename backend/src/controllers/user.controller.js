@@ -48,16 +48,9 @@ export const getChatUsersController = async (req, res) => {
 export const resetPasswordController = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return;
+        if (!email) return res.status(400).json({ success: false, message: "Email is required" });
         res.status(200).json({ success: true, message: "If email exists password reset link will send to your email" })
-        setImmediate(async () => {
-            try {
-                await resetPasswordService(email);
-                console.log('Email sent');
-            } catch (err) {
-                console.error('Failed to send email:', err);
-            }
-        });
+        await resetPasswordService(email);
     } catch (err) {
         console.error("Error in reset password controller", err);
         return res.status(500).json({ success: false, message: "Internal server error" });

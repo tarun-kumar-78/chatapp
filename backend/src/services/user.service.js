@@ -70,7 +70,14 @@ export const resetPasswordService = async (email) => {
                 token: hashedToken,
                 expireAt: new Date(Date.now() + 15 * 60 * 1000),
             });
-            await sendEmail(email, resetLink, user.name);
+            setImmediate(async () => {
+                try {
+                    await sendEmail(email, resetLink, user.name);
+                    console.log('Email sent');
+                } catch (err) {
+                    console.error('Failed to send email:', err);
+                }
+            });
 
         }
     } catch (err) {
