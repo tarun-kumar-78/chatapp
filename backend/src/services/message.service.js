@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { trusted } from "mongoose";
 import { Conversation } from "../models/conversation.model.js"
 import Messages from '../models/message.model.js';
 import getConversationKey from "../utils/getConversationKey.js";
@@ -17,10 +17,10 @@ export const getOrCreatePrivateConversation = async (userOneId, userTwoId) => {
     return conversation;
 }
 
-export const getPrivateMessages = async (conversationId) => {
-    const messages = await Messages.find({ conversationId }).sort({ createdAt: 1 }).select("conversationId senderId type content createdAt");
-    return messages;
-}
+// export const getPrivateMessages = async (conversationId, userId) => {
+//     const messages = await Messages.find({ conversationId, deletedFor: { $ne: userId } }).sort({ createdAt: 1 }).select("conversationId senderId type content createdAt");
+//     return messages;
+// }
 
 export const getUnreadMessagesCount = async (userId) => {
     const conversations = await Conversation.find({
@@ -127,7 +127,7 @@ export const uploadImage = async (file, data) => {
 export const searchTextService = async (text) => {
     try {
         const vector = await getEmbeddings(text);
-        const result = Messages.aggregate([
+        const result = await Messages.aggregate([
             {
                 $vectorSearch: {
                     index: "vector_index",
@@ -137,7 +137,7 @@ export const searchTextService = async (text) => {
                     limit: 5
                 }
             }
-        ]).toArray();
+        ]);
         return result;
     } catch (err) {
         console.log("Error in search text service", err);
@@ -146,10 +146,10 @@ export const searchTextService = async (text) => {
 }
 
 
-export const getChatService = async (chatId, lastMessageId) => {
+export const getChatService = async (chatId, lastMessageId, userId) => {
     try {
         const LIMIT = 15;
-        const query = { conversationId: chatId };
+        const query = { conversationId: chatId, deletedFor: { $ne: userId } };
         if (lastMessageId) {
             query.createdAt = { $lt: new Date(lastMessageId) };
         }
@@ -158,9 +158,18 @@ export const getChatService = async (chatId, lastMessageId) => {
             .sort({ createdAt: -1 }).lean();
         const hasMore = messages.length >= LIMIT;
         const slicedMessages = hasMore ? messages.slice(0, LIMIT) : messages;
-        return { messages: slicedMessages.reverse(), hasMore, messageId: messages[messages.length - 1].createdAt };
+        return { messages: slicedMessages.reverse(), hasMore, messageId: messages.length > 1 ? messages[messages.length - 1].createdAt : "" };
     } catch (err) {
         console.error("getChatService err", err);
+        throw err;
+    }
+}
+
+export const deleteMessageService = async (messageIds, userId) => {
+    try {
+        const messages = await Messages.updateMany({ _id: { $in: messageIds } }, { $addToSet: { deletedFor: userId } })
+    } catch (err) {
+        console.error("error in deleteMessageService", err);
         throw err;
     }
 }

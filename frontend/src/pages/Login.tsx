@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import api from "@/service/axios"
 import { getErrMessage } from "@/utils/getErrMessage"
+import { setItem } from "@/utils/storage"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { useRef, useState } from "react"
@@ -40,6 +41,7 @@ const Login = () => {
             const response = await api.post("/api/auth/login", data);
             if (response.data.success) {
                 navigate("/");
+                setItem("isAuthenticated", true);
                 toast.success(response.data.message);
             }
         } catch (err) {

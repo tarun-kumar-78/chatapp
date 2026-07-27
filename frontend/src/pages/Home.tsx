@@ -47,9 +47,7 @@ const Home = () => {
         <div className="bg-white min-h-screen flex">
             <Users />
             <Chat />
-            <div className="border min-w-[20%] hidden lg:flex">
-                <UserProfile />
-            </div>
+            <UserProfile />
         </div>
     );
 };

@@ -1,14 +1,22 @@
-import img from '@/assets/chatapp-image.jpg';
+import img from '@/assets/avatar.avif';
 import { Input } from "@/components/ui/input";
 import api from '@/service/axios';
 import type { RootState } from '@/store';
 import { addUser, setConversationId, setMessages, setSelectedUser, setUnreadCount } from '@/store/user/userSlice';
 import type { User } from '@/type/user';
-import { CirclePlus, LogOut, Pencil, Search } from 'lucide-react';
+import { CirclePlus, EllipsisVertical, Pencil, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Badge } from "@/components/ui/badge";
 import imageCompression from 'browser-image-compression';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 import {
     Dialog,
     DialogClose,
@@ -43,21 +51,21 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { getErrMessage } from '@/utils/getErrMessage';
 import { getChats } from '@/service/messages';
+import { clearStorage } from '@/utils/storage';
 const Users = () => {
     const [users, setUsers] = useState<User[]>([]);
-    const { selectedUser } = useSelector((state: RootState) => state.user);
-    const { user, selectedUserMessages } = useSelector((state: RootState) => state.user);
-    const { unreadMessagesCount } = useSelector((state: RootState) => state.user);
+    const { selectedUser, user, selectedUserMessages, unreadMessagesCount } = useSelector((state: RootState) => state.user);
     const [openDialog, setOpenDialog] = useState(false);
     const [previewImage, setPreviewImage] = useState<string>();
     const [avatarFile, setAvatarFile] = useState<File | null>();
     const dispatch = useDispatch();
     const imgRef = useRef<HTMLInputElement | null>(null);
     const navigate = useNavigate();
-    const [logout, setLogout] = useState<boolean>(false);
+    const [logoutDialog, setLogoutDialog] = useState<boolean>(false);
     const [newChat, setNewChat] = useState<string[]>([]);
     const [extractUsers, setExtractUser] = useState<User[]>([]);
     const [addUserBtn, setAddUserBtn] = useState(false);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         const getUsers = async () => {
@@ -78,11 +86,12 @@ const Users = () => {
         };
         fetchUnreadCounts();
 
-        // Get only users whom with login user chat
+        // Get only users whom with login user already did chat
         const getChatUser = async () => {
             const response = await api.get("api/user/getChatUsers");
             setNewChat(response.data.users);
         }
+
         getUsers();
         getChatUser();
     }, [addUserBtn, dispatch]);
@@ -118,9 +127,9 @@ const Users = () => {
         await readMessages(user.conversationId);
         const conversationId = await getConversationId(user._id);
         dispatch(setConversationId(conversationId));
-        if (!selectedUserMessages[user._id]) {
+        if (!(user._id in selectedUserMessages.userMessages)) {
             const response = await getChats(conversationId, "");
-            dispatch(setMessages({ userId: user._id, messages: response.messages }));
+            dispatch(setMessages({ userMessages: { [user._id]: { messages: response.messages, loading: false } } }));
         }
     }
 
@@ -190,6 +199,7 @@ const Users = () => {
             const response = await api.get("/api/auth/logout");
             if (response.data.success) {
                 toast.success(response.data.message);
+                clearStorage();
                 navigate("/login");
             }
         } catch (err) {
@@ -201,9 +211,10 @@ const Users = () => {
 
 
 
+
     return (
         <>
-            <div className="border bg-gray-300/30 w-full hidden lg:block lg:w-[20%] min-w-70 p-4">
+            <div className={`border bg-gray-300/30 ${!selectedUser ? "sm:block w-full" : "hidden"} lg:block lg:w-[20%] min-w-70 p-4 h-screen`}>
                 <div className="flex justify-between items-center h-12">
                     <div className="flex items-center gap-3">
                         <img src={user?.avatar || previewImage || img} alt="profile image" className="h-9 w-9 sm:w-10 sm:h-10 rounded-full" />
@@ -211,15 +222,28 @@ const Users = () => {
                             <p className="text-sm font-medium">{user?.name}</p>
                         </div>
                     </div>
-                    <Pencil className="h-4 w-4 sm:w-5 sm:h-5 cursor-pointer" onClick={() => setOpenDialog(true)} />
+                    <div className='flex items-center gap-2'>
+                        <Pencil className="h-4 w-4 sm:w-5 sm:h-5 cursor-pointer" onClick={() => setOpenDialog(true)} />
+                        {/* // DropDown Menu */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger>
+                                <EllipsisVertical className='lg:hidden cursor-pointer' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end' className=''>
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem onClick={() => setLogoutDialog(true)}>Logout</DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                    </div>
                 </div>
                 <div className='flex items-center gap-3'>
-
-                    <div className="flex my-4 border items-center px-2 rounded-full bg-white">
+                    <div className="hidden lg:flex my-4 border items-center px-2 rounded-full bg-white">
                         <Search className='h-4 w-4' />
-                        <Input placeholder="Search" className="border-none w-full text-sm focus-visible:ring-0" />
+                        <Input placeholder="Search" onChange={(e) => setSearch(e.target.value.toLowerCase())} value={search} className="border-none w-full text-sm focus-visible:ring-0" />
                     </div>
-                    <CirclePlus className='h-5 w-5 cursor-pointer' onClick={() => setAddUserBtn(!addUserBtn)} />
+                    <CirclePlus className='hidden lg:block h-5 w-5 cursor-pointer' onClick={() => setAddUserBtn(!addUserBtn)} />
                 </div>
                 <div className='border w-full my-3'></div>
                 <div className='flex justify-between flex-col h-[80%]'>
@@ -230,15 +254,15 @@ const Users = () => {
                             </div>
                         }
                         {
-                            extractUsers.map((user: User) => {
+                            extractUsers.filter(user => user.name?.toLowerCase().includes(search)).map((user: User) => {
                                 return (
                                     <div key={user._id} className={`flex justify-between bg-gray-300 items-center hover:bg-gray-400 p-2 rounded-md cursor-pointer ${selectedUser?._id === user._id ? 'bg-gray-400' : ''}`} onClick={() => handleUserTabClick(user)}>
                                         <div className="flex items-center gap-3">
 
-                                            <img src={img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
+                                            <img src={user.avatar || img} alt="profile image" className="sm:h-10 sm:w-10 h-9 w-9 rounded-full" />
                                             <div className="">
                                                 <p className="text-sm">{user.name}</p>
-                                                <p className="text-xs text-gray-500">{ }</p>
+                                                <p className="text-xs text-gray-500"></p>
                                             </div>
                                         </div>
                                         <div>
@@ -256,11 +280,8 @@ const Users = () => {
                             })
                         }
                     </div>
-                    <div className='flex items-center justify-center cursor-pointer'>
-                        <div className='flex gap-3 bg-black p-1 text-white items-center rounded-sm' onClick={() => setLogout(true)}>
-                            <span>Logout</span>
-                            <LogOut className='h-5 w-5' />
-                        </div>
+                    <div className='bg-black hidden lg:flex cursor-pointer h-10 rounded-sm  items-center justify-center'>
+                        <p className='text-white' onClick={() => setLogoutDialog(true)}>Logout</p>
                     </div>
 
                 </div>
@@ -329,7 +350,7 @@ const Users = () => {
             </Dialog>
 
             {/* Logout dialog */}
-            <AlertDialog open={logout} >
+            <AlertDialog open={logoutDialog} >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -337,11 +358,13 @@ const Users = () => {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setLogout(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setLogoutDialog(false)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+
         </>
 
     )
