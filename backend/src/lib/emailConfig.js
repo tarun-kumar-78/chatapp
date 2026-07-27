@@ -1,5 +1,8 @@
 import nodeMailer from 'nodemailer'
 import { EMAIL, PASSWORD } from '../db/env.js'
+import dns from "node:dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 export const transport = nodeMailer.createTransport({
     service: "gmail",
