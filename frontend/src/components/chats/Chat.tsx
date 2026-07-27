@@ -53,8 +53,6 @@ const Chat = () => {
     const [showCheckBox, setShowCheckbox] = useState(false);
     const [deleteMessages, setDeleteMessages] = useState<string[]>([]);
     const [isDeleteMessage, setIsDeleteMessage] = useState(false);
-    const [searchText, setSearchText] = useState(false);
-    const [text, setText] = useState("");
 
     // ref elements
     const chatDivRef = useRef<HTMLDivElement>(null);
@@ -270,7 +268,6 @@ const Chat = () => {
                             <DropdownMenuContent align='end' className=''>
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem>Clear Chat</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setSearchText(true)}>Search</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem>Block</DropdownMenuItem>
                                 </DropdownMenuGroup>
