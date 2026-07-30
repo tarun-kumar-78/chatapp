@@ -49,12 +49,12 @@ export const loginController = async (req, res) => {
       return res.status(400).json({ success: false, message: "All fields are required" });
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ success: false, message: "Incorrect email address" });
+      return res.status(400).json({ success: false, message: "Invalid email and password" });
     }
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect)
-      return res.status(400).json({ success: false, message: "Incorrect password" });
+      return res.status(400).json({ success: false, message: "Invalid email and password" });
     generateToken(user.id, res);
     return res.status(200).json({ success: true, message: "Login successfully", user: user });
   } catch (err) {

@@ -93,26 +93,23 @@ const Login = () => {
 
     return (
         <>
-            <main className="min-h-screen flex flex-col items-center justify-center">
-                <div className="py-4 px-4 md:px-8">
-                    <div className="grid max-w-6xl w-full">
-                        <div
-                            className="border border-slate-300 rounded-lg p-6 max-w-md mx-auto shadow-sm md:p-8 lg:mx-0 dark:border-neutral-700">
-
-                            <div className="mb-8">
-                                <h1 className="text-slate-900 text-3xl font-bold mb-4 dark:text-slate-50">Sign in</h1>
-                                <p className="text-slate-600 text-base leading-relaxed dark:text-slate-400">Sign in to your account to access
-                                    your dashboard and manage your projects.</p>
-                            </div>
-
-                            <form className="space-y-6" onSubmit={form.handleSubmit(login)} method="post">
-                                <div className='relative'>
-                                    <Controller
-                                        name="email"
-                                        control={form.control}
-                                        render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
-                                                <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Email</FieldLabel>
+            <main className="min-h-screen flex items-center justify-center">
+                <div className="p-4 md:px-8">
+                    <div className="border border-slate-300 rounded-lg p-6 max-w-md shadow-sm md:p-8 dark:border-neutral-700">
+                        <div className="">
+                            <h1 className="text-slate-900 text-3xl font-bold mb-3">Sign in</h1>
+                            <p className="text-slate-600 text-base mb-3 leading-relaxed">Sign in to your account to access
+                                your dashboard and manage your projects.</p>
+                        </div>
+                        <form onSubmit={form.handleSubmit(login)} method="post">
+                            <div className="flex flex-col max-w-6xl gap-5 w-full">
+                                <Controller
+                                    name="email"
+                                    control={form.control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid} className="gap-1">
+                                            <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                                            <div className="relative">
                                                 <Input
                                                     {...field}
                                                     id={field.name}
@@ -120,29 +117,29 @@ const Login = () => {
                                                     placeholder="Email"
                                                     autoComplete="off"
                                                     className='h-10'
+                                                    required
                                                 />
-                                                <div className='h-1'>
-                                                    {fieldState.invalid && (
-                                                        <div className="group/icon">
-                                                            <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+                                                {fieldState.invalid && (
+                                                    <div className="group/icon">
+                                                        <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
 
-                                                            <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
-                                                                {fieldState.error?.message}
-                                                            </div>
+                                                        <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                                                            {fieldState.error?.message}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </Field>
-                                        )}
-                                    />
-                                </div>
-                                <div className='relative'>
-                                    <Controller
-                                        name="password"
-                                        control={form.control}
-                                        render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
-                                                <FieldLabel className='absolute -top-6 left-1' htmlFor={field.name}>Password</FieldLabel>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="password"
+                                    control={form.control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid} className="gap-1">
+                                            <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                                            <div className="relative">
                                                 <Input
                                                     {...field}
                                                     id={field.name}
@@ -151,25 +148,26 @@ const Login = () => {
                                                     autoComplete="off"
                                                     className='h-10'
                                                     type={!showPass ? "text" : "password"}
+                                                    required
+
                                                 />
-                                                <div className='h-1'>
-                                                    {fieldState.invalid && (
-                                                        <div className="group/icon">
-                                                            <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
+                                                {showPass ? <EyeOff className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} /> :
+                                                    <Eye className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} />}
+                                                {fieldState.invalid && (
+                                                    <div className="group/icon">
+                                                        <AlertCircle className="absolute -right-5 top-3 h-4 w-4 text-red-500 cursor-pointer" />
 
-                                                            <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
-                                                                {fieldState.error?.message}
-                                                            </div>
+                                                        <div className="absolute right-0 top-9 hidden w-max text-red-500 rounded px-2 py-1 text-xs text-red group-hover/icon:block">
+                                                            {fieldState.error?.message}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </Field>
-                                        )}
-                                    />
-                                    {showPass ? <EyeOff className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} /> :
-                                        <Eye className='absolute top-2.5 right-2 size-5' onClick={() => setShowPass(!showPass)} />}
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                </div>
+
+                                        </Field>
+                                    )}
+                                />
                                 <div className="flex items-start flex-wrap gap-2">
                                     <Link to="#" onClick={() => setOpenDialog(true)}
                                         className="ml-auto text-sm font-medium text-blue-700 dark:text-blue-500 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">
@@ -185,8 +183,8 @@ const Login = () => {
                                     className="text-blue-700 hover:underline ml-1 font-medium dark:text-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">Sign
                                     up</Link>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </main>

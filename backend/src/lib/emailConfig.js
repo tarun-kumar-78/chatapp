@@ -1,19 +1,8 @@
 import nodeMailer from 'nodemailer'
 import { EMAIL, PASSWORD, RESEND_API_KEY } from '../db/env.js'
-// import dns from "node:dns";
 import { Resend } from 'resend';
 
-// dns.setDefaultResultOrder("ipv4first");
 
-// export const transport = nodeMailer.createTransport({
-//     host: "smtp.gmail.com",
-//     port: 587,
-//     secure: false,
-//     auth: {
-//         user: EMAIL,
-//         pass: PASSWORD,
-//     }
-// });
 const resend = new Resend(RESEND_API_KEY);
 
 export const sendEmail = async (email, resetLink, name) => {

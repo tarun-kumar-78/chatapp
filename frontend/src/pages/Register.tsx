@@ -64,6 +64,7 @@ const Register = () => {
                       placeholder="Name"
                       autoComplete="off"
                       className='h-10'
+                      required
                     />
                     <div className='h-1'>
 
@@ -95,6 +96,7 @@ const Register = () => {
                       placeholder="Email"
                       autoComplete="off"
                       className='h-10'
+                      required
                     />
                     <div className='h-1'>
                       {fieldState.invalid && (
@@ -125,6 +127,7 @@ const Register = () => {
                       placeholder="Password"
                       autoComplete="off"
                       className='h-10'
+                      required
                       type={!showPass ? "text" : "password"}
                     />
                     <div className='h-1'>
@@ -159,6 +162,7 @@ const Register = () => {
                       placeholder="Mobile"
                       autoComplete="off"
                       className='h-10'
+                      required
                     />
                     <div className='h-1'>
 

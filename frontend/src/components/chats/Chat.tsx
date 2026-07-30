@@ -1,5 +1,5 @@
 import img from '@/assets/avatar.avif';
-import { ArrowLeft, ChevronDown, EllipsisVertical, Image, SendHorizontal, Share2, Smile, SquarePlay, ThumbsDown, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, EllipsisVertical, Image, SendHorizontal, Smile, ThumbsDown, Trash2, X } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store';
@@ -47,8 +47,6 @@ const Chat = () => {
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [openEmoji, setOpenEmoji] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-    const [expanded, setExpanded] = useState(false);
-    // const [blueTick, setBlueTick] = useState("");
     const [openMenuId, setOpenMenuId] = useState("");
     const [showCheckBox, setShowCheckbox] = useState(false);
     const [deleteMessages, setDeleteMessages] = useState<string[]>([]);
@@ -278,8 +276,8 @@ const Chat = () => {
                 </div>
 
 
-                <div ref={chatDivRef} className='flex-1 overflow-y-auto no-scrollbar' onScroll={handleScroll}>
-                    <div className='min-h-full flex flex-col justify-end p-3 gap-3'>
+                <div ref={chatDivRef} className='flex-1 overflow-y-auto no-scrollbar p-2' onScroll={handleScroll}>
+                    <div className={`min-h-full flex flex-col justify-end ${showCheckBox ? "transition-all ease-in-out duration-300 p-3" : "p-0"} gap-3`}>
 
                         {loadOlderMessages &&
                             <div className="flex justify-center items-center">
@@ -302,18 +300,15 @@ const Chat = () => {
                                 return (
                                     <div key={message._id}>
                                         {(i === 0 || !isSame) && <p className='text-center my-4 text-sm max-sm:text-[.78rem]'>{getDate}</p>}
-                                        <div className='flex gap-6 items-center'>
-                                            <div className='w-5'>
-                                                <Checkbox className={`transition-opacity duration-300 ${showCheckBox ? "block" : "hidden"}`} onClick={() => handleDeleteMessages(message._id)} checked={deleteMessages.includes(message._id)} />
-
-                                            </div>
+                                        <div className='flex items-center'>
+                                            <Checkbox className={`${showCheckBox ? "transition-all duration-300 -translate-x-2" : "transition-all -translate-x-8 duration-300 ease-in-out"}`} onClick={() => handleDeleteMessages(message._id)} checked={deleteMessages.includes(message._id)} />
                                             <div className={`flex w-full ${message.senderId === user?._id ? "justify-end" : "justify-start"}`}>
 
                                                 {!selectedUserMessages.userMessages[selectedUser._id]?.loading && message.type === 'text' ? <div className={`group relative flex gap-1 pl-2 ${message.senderId === user?._id ? `bg-[#25D366]` : `bg-[#34B7F1]`} rounded-md max-w-[90%]`}>
 
                                                     <p key={message._id} className='py-2 w-fit text-sm max-sm:text-[.78rem]'>{message.content}</p>
                                                     <p className={`text-[9px] self-end w-11  ${message.senderId === user?._id ? "right-2" : "left-2"} text-gray-700`}>{extractTime12Hour(message.createdAt)}</p>
-                                                    <DropdownMenu open={message._id === openMenuId} onOpenChange={(open) => setOpenMenuId(open ? message._id : "")}>
+                                                    {!showCheckBox && <DropdownMenu open={message._id === openMenuId} onOpenChange={(open) => setOpenMenuId(open ? message._id : "")}>
                                                         <DropdownMenuTrigger>
                                                             <ChevronDown onClick={() => setOpenMenuId(message._id)} className='absolute text-white h-5 w-5 top-1 right-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100' />
                                                         </DropdownMenuTrigger>
@@ -323,7 +318,7 @@ const Chat = () => {
                                                                 <DropdownMenuItem onClick={() => { setShowCheckbox(true); setDeleteMessages((messId) => [...messId, message._id]) }}><Trash2 />Delete</DropdownMenuItem>
                                                             </DropdownMenuGroup>
                                                         </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                    </DropdownMenu>}
                                                 </div> : <div className={`group rounded-md p-1 relative ${message.senderId === user?._id ? "bg-[#25D366]" : "bg-[#34B7F1]"} `}>
                                                     <img src={message.content} className='rounded-md h-52 ' alt="image" />
                                                     <p className={`text-[9px] absolute bottom-2 text-gray-100 right-2`}>{extractTime12Hour(message.createdAt)}</p>
@@ -355,34 +350,20 @@ const Chat = () => {
 
                     </div>
                 </div>
-
-
-
-                <div className="h-15 bg-gray-300 flex items-center justify-center w-full">
-                    {!showCheckBox ? <div className='flex w-[80%] items-center gap-2'>
-
-                        <Input onKeyDown={handleEnterPress} value={inputMessage} placeholder='Type message here' className='h-10 lg:text-1rem text-.5rem w-[80%] bg-gray-100' onChange={handleInputMessage} />
+                <div className="bg-gray-300 flex items-center w-full p-2">
+                    {!showCheckBox ? <div className='flex w-full items-center gap-2'>
+                        <Input onKeyDown={handleEnterPress} value={inputMessage} placeholder='Type message here' className='py-2 lg:text-1rem text-.5rem w-full bg-gray-100' onChange={handleInputMessage} />
                         <div className="absolute right-1.5 bottom-16" ref={emojiRef}>
                             <EmojiPicker open={openEmoji} onEmojiClick={handleEmoji} />
                         </div>
                         <SendHorizontal className={`h-7 w-7 cursor-pointer ${inputMessage.trim() === "" ? "cursor-not-allowed opacity-20" : "cursor-pointer text-blue-600"}`} onClick={sendMessage} />
-
                         <Smile className='h-6 w-6 cursor-pointer text-gray-600' onClick={() => setOpenEmoji(!openEmoji)} />
-                        <Share2
-                            onClick={() => setExpanded(!expanded)}
-                            className="h-6 w-6 cursor-pointer text-gray-600"
-                        />
                         <form method="post" encType="multipart/form-data">
                             <input type="file" ref={imgUploadRef} className='hidden' accept='image/*' onChange={handleImageUpload} />
                             <Image onClick={() => imgUploadRef.current?.click()}
-                                className={`h-6 w-6 cursor-pointer text-gray-600 transition-all duration-300 ease-in-out ${expanded ? "translate-x-2 opacity-100" : "translate-x-0 opacity-0"
-                                    }`}
+                                className={`h-5 w-5 cursor-pointer text-gray-600`}
                             />
                         </form>
-                        <SquarePlay
-                            className={`h-6 w-6 cursor-pointer text-gray-600 transition-all duration-300 ease-in-out ${expanded ? "translate-x-4 opacity-100" : "translate-x-0 opacity-0"
-                                }`}
-                        />
                     </div> : <div className='flex justify-between w-full px-5'>
                         <div className='flex gap-3'>
                             <X onClick={() => {
